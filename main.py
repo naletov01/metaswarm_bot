@@ -14,7 +14,7 @@ from telegram.ext import (
     Filters,
     CallbackContext,
 )
-import openai
+from openai import OpenAI
 import replicate
 
 # ——— Настройка логирования ———
@@ -37,7 +37,7 @@ bot = Bot(token=BOT_TOKEN)
 app = FastAPI()
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
 
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
 replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
 
 executor = ThreadPoolExecutor(max_workers=2)
@@ -132,8 +132,13 @@ def text_handler(update: Update, context: CallbackContext):
 
         update.message.reply_text("⏳ Генерация изображения…")
         try:
-            res     = openai.Image.create(prompt=text, n=1, size="1080x1920")
-            img_url = res["data"][0]["url"]
+            resp = client.images.generate(
+                model="dall-e-3",
+                prompt=text,
+                size="1080x1920",
+                n=1
+            )
+            img_url = resp.data[0].url
             data["last_image"] = img_url
             limits["images"]  += 1
             data["last_action"] = now
