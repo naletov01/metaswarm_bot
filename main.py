@@ -135,7 +135,7 @@ def text_handler(update: Update, context: CallbackContext):
             resp = client.images.generate(
                 model="dall-e-3",
                 prompt=text,
-                size="1080x1920",
+                size="1024x1792",
                 n=1
             )
             img_url = resp.data[0].url
