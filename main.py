@@ -92,10 +92,12 @@ def image_upload_handler(update: Update, context: CallbackContext):
     try:
         file = context.bot.get_file(file_id)
         file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
-        user_data.setdefault(user_id, {})["last_image"] = file_url
+        data = user_data.setdefault(user_id, {})
+        data["last_image"] = file_url
+        data["upload_for_edit"] = True      # <-- флаг, что это исходное изображение для Image-to-Image
         update.message.reply_text(
-            "Изображение сохранено.\n"
-            "Теперь введите текст — он будет использован для генерации видео."
+            "Изображение сохранено для редактирования.\n"
+            "Теперь введите текстовый промпт — будет использоваться вместе с загруженной картинкой."
         )
     except Exception as e:
         logger.error(f"Error saving uploaded image: {e}")
@@ -124,7 +126,7 @@ def text_handler(update: Update, context: CallbackContext):
 
     mode = data.get("mode")
 
-    # — Генерация изображения —
+    # ——— Генерация изображения (T2I или I2I) ———
     if mode == "image":
         if limits["images"] >= 3:
             update.message.reply_text("Лимит бесплатных изображений исчерпан.")
@@ -132,17 +134,38 @@ def text_handler(update: Update, context: CallbackContext):
 
         update.message.reply_text("⏳ Генерация изображения…")
         try:
-            resp = client.images.generate(
-                model="dall-e-3",
-                prompt=text,
-                size="1024x1792",
-                n=1
-            )
-            img_url = resp.data[0].url
-            data["last_image"] = img_url
-            limits["images"]  += 1
-            data["last_action"] = now
+            # если до этого загрузили своё изображение для редактирования
+            if data.pop("upload_for_edit", False):
+                # скачиваем исходник
+                import requests, io
+                resp_img = requests.get(data["last_image"])
+                img_file = io.BytesIO(resp_img.content)
+
+                edit_resp = client.images.edit(
+                    image=img_file,
+                    mask=None,                # можно передать маску, если нужна выборочная правка
+                    prompt=text,
+                    n=1,
+                    size="1024x1792"
+                )
+                img_url = edit_resp.data[0].url
+
+            else:
+                # обычная генерация по тексту
+                gen_resp = client.images.generate(
+                    model="dall-e-3",
+                    prompt=text,
+                    size="1024x1792",
+                    n=1
+                )
+                img_url = gen_resp.data[0].url
+
+            # сохраняем и отправляем
+            data["last_image"]   = img_url
+            limits["images"]    += 1
+            data["last_action"]  = now
             update.message.reply_photo(photo=img_url)
+
         except Exception as e:
             logger.error(f"Image generation failed: {e}")
             logger.info(f"User {user_id} prompt: {text}")
@@ -155,7 +178,7 @@ def text_handler(update: Update, context: CallbackContext):
         if not last_img:
             update.message.reply_text("Сначала сгенерируйте или загрузите изображение.")
             return
-        if limits["videos"] >= 5:
+        if limits["videos"] >= 1:
             update.message.reply_text("Лимит видео-генераций исчерпан.")
             return
 
