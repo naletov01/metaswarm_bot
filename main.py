@@ -142,18 +142,32 @@ def text_handler(update: Update, context: CallbackContext):
         update.message.reply_text("⏳ Генерирую/правлю через gpt-image-1…")
         try:
             if data.pop("upload_for_edit", False):
-                # Image-to-Image
-                response = requests.get(data["last_image"])
-                orig = io.BytesIO(response.content)
-                mask = io.BytesIO(b"\x89PNG\r\n\x1a\n")  # пустая маска
-                resp = client.images.edit(
-                    model="gpt-image-1",
-                    image=("image.png", orig, "image/png"),
-                    mask =("mask.png", mask, "image/png"),
-                    prompt=text,
-                    size="1024x1024",
-                    n=1
-                )
+                update.message.reply_text("⏳ Редактирую изображение через gpt-image-1…")
+                try:
+                    # 1) скачиваем оригинал прямо из Telegram
+                    tg_file = bot.get_file(data["last_image_id"])
+                    orig_bytes = io.BytesIO(tg_file.download_as_bytearray())
+            
+                    # 2) создаём маску того же размера (прозрачный RGBA)
+                    img = Image.open(orig_bytes).convert("RGBA")
+                    mask_img = Image.new("RGBA", img.size, (0, 0, 0, 0))
+                    mask_buf = io.BytesIO()
+                    mask_img.save(mask_buf, format="PNG")
+                    mask_buf.seek(0)
+                    orig_bytes.seek(0)
+            
+                    # 3) вызываем edit-endpoint без параметра model
+                    resp = client.images.edit(
+                        image=("image.png", orig_bytes, "image/png"),
+                        mask=("mask.png", mask_buf, "image/png"),
+                        prompt=text,
+                        size="1024x1024",
+                        n=1
+                    )
+                except Exception as e:
+                    logger.error(f"Image edit failed: {e}")
+                    update.message.reply_text("Ошибка редактирования через gpt-image-1.")
+                    return
             else:
                 # Text-to-Image
                 resp = client.images.generate(
