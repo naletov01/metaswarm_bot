@@ -151,10 +151,9 @@ def text_handler(update: Update, context: CallbackContext):
                     # 2) Открываем и конвертируем в RGBA
                     img = Image.open(orig_bytes).convert("RGBA")
             
-                    # 3) Уменьшаем, если больше 1024px по любой стороне
-                    max_dim = 1024
-                    if max(img.size) > max_dim:
-                        img.thumbnail((max_dim, max_dim))
+                    # 3) Уменьшаем, если любая сторона больше 1024px
+                    if max(img.size) > 1024:
+                        img.thumbnail((1024, 1024))
             
                     # 4) Сохраняем подготовленное изображение в PNG
                     prepared = io.BytesIO()
@@ -162,12 +161,13 @@ def text_handler(update: Update, context: CallbackContext):
                     prepared.seek(0)
             
                     # 5) Создаём прозрачную маску того же размера
-                    mask_img = Image.new("RGBA", img.size, (0, 0, 0, 0))
                     mask_buf = io.BytesIO()
-                    mask_img.save(mask_buf, format="PNG")
+                    Image.new("RGBA", img.size, (0, 0, 0, 0)).save(mask_buf, "PNG")
                     mask_buf.seek(0)
             
-                    # 6) Вызываем edit-endpoint
+                    # 6) Вызываем edit-эндпоинт без model=
+                    # перед вызовом edit
+                    logger.info(f"OPENAI_IMAGES.EDIT: модель=gpt-image-1, mode=I2I, prompt={text}")
                     resp = client.images.edit(
                         image=("image.png", prepared, "image/png"),
                         mask=("mask.png",  mask_buf,  "image/png"),
@@ -179,33 +179,23 @@ def text_handler(update: Update, context: CallbackContext):
                     logger.error(f"Image edit failed: {e}")
                     update.message.reply_text("Ошибка редактирования через gpt-image-1.")
                     return
-                    
-                except Exception as e:
-                    logger.error(f"Image edit failed: {e}")
-                    update.message.reply_text("Ошибка редактирования через gpt-image-1.")
-                    return
             else:
-                # Text-to-Image
+                # перед вызовом generate
+                logger.info(f"OPENAI_IMAGES.GENERATE: модель=gpt-image-1, mode=T2I, prompt={text}")
                 resp = client.images.generate(
                     model="gpt-image-1",
                     prompt=text,
                     size="1024x1024",
                     n=1
                 )
-
+            
             url = resp.data[0].url
             sent = update.message.reply_photo(photo=url)
             data["last_image"]    = url
             data["last_image_id"] = sent.photo[-1].file_id
             limits["images"]     += 1
             data["last_action"]   = time.time()
-        except Exception as e:
-            logger.error(f"gpt-image-1 Images API failed: {e}")
-            update.message.reply_text(
-                "Ошибка генерации/редактирования через gpt-image-1. "
-                "Проверьте верификацию и баланс."
-            )
-        return
+            return
 
     # ——— Генерация видео ———
     if mode == "video":
