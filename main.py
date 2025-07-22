@@ -190,48 +190,6 @@ def text_handler(update: Update, context: CallbackContext):
             update.message.reply_text("Ошибка генерации изображения. Попробуйте позже.")
         return
         
-        name = fn.name
-        args = json.loads(fn.arguments)
-    
-        if name == "generate_image":
-            img = client.images.generate(
-                model="dall-e-3",
-                prompt=args["prompt"],
-                size=args["size"],
-                n=args.get("n",1)
-            )
-            url = img.data[0].url
-            sent = update.message.reply_photo(photo=url)
-            data["last_image"] = url
-            # Telegram сохранит фото и даст новый file_id — сохраняем его
-            data["last_image_id"] = sent.photo[-1].file_id
-    
-        elif name == "edit_image":
-            orig_url = args["image_url"]
-            resp     = requests.get(orig_url)
-            orig     = io.BytesIO(resp.content)
-        
-            pil    = Image.open(orig).convert("RGBA")
-            mask   = Image.new("RGBA", pil.size, (0,0,0,0))
-            mb     = io.BytesIO(); mask.save(mb,"PNG"); mb.seek(0); orig.seek(0)
-        
-            out = client.images.edit(
-                image  = ("image.png", orig, "image/png"),
-                mask   = ("mask.png",  mb,   "image/png"),
-                prompt = args["prompt"],
-                size   = args["size"],
-                n      = args.get("n",1)
-            )
-            url = out.data[0].url
-            sent = update.message.reply_photo(photo=url)
-            data["last_image"] = url
-            # Telegram сохранит фото и даст новый file_id — сохраняем его
-            data["last_image_id"] = sent.photo[-1].file_id
-    
-        data.pop("upload_for_edit", None)
-        limits["images"] += 1
-        data["last_action"] = time.time()
-        return
 
     # — Генерация видео —
     if mode == "video":
