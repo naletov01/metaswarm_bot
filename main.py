@@ -19,6 +19,37 @@ import replicate
 
 import requests, io
 from PIL import Image
+import json
+
+FUNCTIONS = [
+  {
+    "name": "generate_image",
+    "description": "Создаёт изображение по текстовому промпту",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "prompt":   {"type":"string", "description":"Текстовый промпт"},
+        "size":     {"type":"string", "enum":["1024x1024","512x512","256x256"]},
+        "n":        {"type":"integer", "default":1}
+      },
+      "required": ["prompt","size"]
+    }
+  },
+  {
+    "name": "edit_image",
+    "description": "Редактирует ранее загруженное изображение по промпту и маске (RGBA)",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "prompt":      {"type":"string"},
+        "size":        {"type":"string", "enum":["1024x1024","512x512","256x256"]},
+        "image_file":  {"type":"string","description":"ID файла в Telegram"},
+        "mask_file":   {"type":"string","description":"PNG-маска в память как base64 или ID"}
+      },
+      "required": ["prompt","size","image_file","mask_file"]
+    }
+  }
+]
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
@@ -131,64 +162,68 @@ def text_handler(update: Update, context: CallbackContext):
     mode = data.get("mode")
 
     # ——— Генерация изображения (T2I или I2I) ———
-    if mode == "image":
-        if limits["images"] >= 3:
-            update.message.reply_text("Лимит бесплатных изображений исчерпан.")
-            return
+    if data.get("mode") == "image":
+        update.message.reply_text("⏳ Обрабатываю запрос через GPT-4 Vision…")
     
-        update.message.reply_text("⏳ Генерация изображения…")
-        try:
-            # Image-to-Image, если был флаг
-            if data.pop("upload_for_edit", False):
-                # 1) скачиваем оригинал из Telegram
-                tg_file    = bot.get_file(data["last_image_id"])
-                img_bytes  = tg_file.download_as_bytearray()
-        
-                # 2) конвертируем в PNG (RGBA)
-                pil_img    = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
-                orig_png   = io.BytesIO()
-                pil_img.save(orig_png, format="PNG")
-                orig_png.seek(0)
-        
-                # 3) делаем полностью прозрачную маску того же размера
-                mask_img   = Image.new("RGBA", pil_img.size, (0,0,0,0))
-                mask_bytes = io.BytesIO()
-                mask_img.save(mask_bytes, format="PNG")
-                mask_bytes.seek(0)
-        
-                # 4) упаковываем в (filename, fileobj, content_type)
-                image_param = ("image.png", orig_png, "image/png")
-                mask_param  = ("mask.png",  mask_bytes, "image/png")
-        
-                # 5) вызываем edit
-                edit_resp = client.images.edit(
-                    image = image_param,
-                    mask  = mask_param,
-                    prompt=text,
-                    n     = 1,
-                    size  = "1024x1024"
-                )
-                img_url = edit_resp.data[0].url
+        # Собираем сообщения
+        messages = [
+            {"role":"system","content":"Ты ассистент по генерации и редактированию изображений."}
+        ]
+        if data.get("last_image_id"):
+            messages.append({
+                "role":"user",
+                "content":"Пожалуйста, отредактируй это изображение по промпту.",
+                "image_file": data["last_image_id"]
+            })
+        else:
+            messages.append({"role":"user","content": text})
     
-            else:
-                # Text-to-Image
-                gen_resp = client.images.generate(
-                    model="dall-e-3",
-                    prompt=text,
-                    size="1024x1024",
-                    n=1
-                )
-                img_url = gen_resp.data[0].url
+        # Вызываем GPT с функциями
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",   # или gpt-4vision
+            messages=messages,
+            functions=FUNCTIONS,
+            function_call="auto"
+        )
     
-            # сохранить и отправить
-            data["last_image"]   = img_url
-            limits["images"]    += 1
-            data["last_action"]  = now
-            update.message.reply_photo(photo=img_url)
+        fn   = resp.choices[0].message.function_call
+        name = fn.name
+        args = json.loads(fn.arguments)
     
-        except Exception as e:
-            logger.error(f"Image generation failed: {e}")
-            update.message.reply_text("Ошибка генерации изображения. Попробуйте позже.")
+        if name == "generate_image":
+            img = client.images.generate(
+                model="dall-e-3",
+                prompt=args["prompt"],
+                size=args["size"],
+                n=args.get("n",1)
+            )
+            url = img.data[0].url
+            update.message.reply_photo(photo=url)
+            data["last_image"] = url
+    
+        elif name == "edit_image":
+            tg_file   = bot.get_file(args["image_file"])
+            img_bytes = tg_file.download_as_bytearray()
+            orig      = io.BytesIO(img_bytes)
+    
+            pil      = Image.open(orig).convert("RGBA")
+            mask     = Image.new("RGBA", pil.size, (0,0,0,0))
+            mb       = io.BytesIO(); mask.save(mb,"PNG"); mb.seek(0); orig.seek(0)
+    
+            out = client.images.edit(
+                image  = ("image.png", orig, "image/png"),
+                mask   = ("mask.png",  mb,   "image/png"),
+                prompt = args["prompt"],
+                size   = args["size"],
+                n      = args.get("n",1)
+            )
+            url = out.data[0].url
+            update.message.reply_photo(photo=url)
+            data["last_image"] = url
+    
+        data.pop("upload_for_edit", None)
+        limits["images"] += 1
+        data["last_action"] = time.time()
         return
 
     # — Генерация видео —
