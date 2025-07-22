@@ -140,26 +140,33 @@ def text_handler(update: Update, context: CallbackContext):
         try:
             # Image-to-Image, если был флаг
             if data.pop("upload_for_edit", False):
-                # 1) Получаем File из Telegram по сохранённому file_id
-                tg_file = bot.get_file(data["last_image_id"])
-                img_bytes = tg_file.download_as_bytearray()        # <<< вот так
-                orig_bytes = io.BytesIO(img_bytes)
-            
-                # 2) Создаём полностью прозрачную маску (RGBA)
-                orig_img = Image.open(orig_bytes).convert("RGBA")
-                mask_img = Image.new("RGBA", orig_img.size, (0, 0, 0, 0))
+                # 1) скачиваем оригинал из Telegram
+                tg_file    = bot.get_file(data["last_image_id"])
+                img_bytes  = tg_file.download_as_bytearray()
+        
+                # 2) конвертируем в PNG (RGBA)
+                pil_img    = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
+                orig_png   = io.BytesIO()
+                pil_img.save(orig_png, format="PNG")
+                orig_png.seek(0)
+        
+                # 3) делаем полностью прозрачную маску того же размера
+                mask_img   = Image.new("RGBA", pil_img.size, (0,0,0,0))
                 mask_bytes = io.BytesIO()
                 mask_img.save(mask_bytes, format="PNG")
                 mask_bytes.seek(0)
-                orig_bytes.seek(0)
-            
-                # 3) Вызываем edit-эндпоинт
+        
+                # 4) упаковываем в (filename, fileobj, content_type)
+                image_param = ("image.png", orig_png, "image/png")
+                mask_param  = ("mask.png",  mask_bytes, "image/png")
+        
+                # 5) вызываем edit
                 edit_resp = client.images.edit(
-                    image=orig_bytes,
-                    mask=mask_bytes,
+                    image = image_param,
+                    mask  = mask_param,
                     prompt=text,
-                    n=1,
-                    size="1024x1792"
+                    n     = 1,
+                    size  = "1024x1792"
                 )
                 img_url = edit_resp.data[0].url
     
