@@ -46,7 +46,7 @@ FUNCTIONS = [
         "image_file":  {"type":"string","description":"ID файла в Telegram"},
         "mask_file":   {"type":"string","description":"PNG-маска в память как base64 или ID"}
       },
-      "required": ["prompt","size","image_file","mask_file"]
+      "required": ["prompt","size","image_file"]
     }
   }
 ]
@@ -106,6 +106,10 @@ def generate_and_send_video(user_id, last_img, prompt):
         bot.send_message(chat_id=user_id, text="Ошибка генерации видео. Попробуйте позже.")
 
 # ——— Хендлеры ———
+def error_handler(update, context):
+    logger.exception("Unhandled error in update")
+dp.add_error_handler(error_handler)
+
 def start(update: Update, context: CallbackContext):
     keyboard = [["🖼 Картинка", "🎞 Видео"]]
     markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
@@ -190,10 +194,10 @@ def text_handler(update: Update, context: CallbackContext):
 
         # функция вызвана?
         fn = getattr(msg, "function_call", None)
-        if not fn or not getattr(fn, "name", None):
-            # случай, когда модель ничего не вызвала — просто шлём текст
-            text_reply = msg.content or "Извините, я не понял, попробуйте ещё раз."
-            update.message.reply_text(text_reply)
+        if not fn:
+            # ни одна функция не была вызвана — отправляем обычный текст
+            text = msg.content or "Извините, не понял."
+            update.message.reply_text(text)
             return
         
         name = fn.name
