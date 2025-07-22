@@ -17,6 +17,8 @@ from telegram.ext import (
 from openai import OpenAI
 import replicate
 
+import requests, ioа
+
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -131,27 +133,25 @@ def text_handler(update: Update, context: CallbackContext):
         if limits["images"] >= 3:
             update.message.reply_text("Лимит бесплатных изображений исчерпан.")
             return
-
+    
         update.message.reply_text("⏳ Генерация изображения…")
         try:
-            # если до этого загрузили своё изображение для редактирования
+            # Image-to-Image, если был флаг
             if data.pop("upload_for_edit", False):
-                # скачиваем исходник
-                import requests, io
                 resp_img = requests.get(data["last_image"])
                 img_file = io.BytesIO(resp_img.content)
-
+    
                 edit_resp = client.images.edit(
                     image=img_file,
-                    mask=None,                # можно передать маску, если нужна выборочная правка
+                    mask=None,
                     prompt=text,
                     n=1,
                     size="1024x1792"
                 )
                 img_url = edit_resp.data[0].url
-
+    
             else:
-                # обычная генерация по тексту
+                # Text-to-Image
                 gen_resp = client.images.generate(
                     model="dall-e-3",
                     prompt=text,
@@ -159,16 +159,15 @@ def text_handler(update: Update, context: CallbackContext):
                     n=1
                 )
                 img_url = gen_resp.data[0].url
-
-            # сохраняем и отправляем
+    
+            # сохранить и отправить
             data["last_image"]   = img_url
             limits["images"]    += 1
             data["last_action"]  = now
             update.message.reply_photo(photo=img_url)
-
+    
         except Exception as e:
             logger.error(f"Image generation failed: {e}")
-            logger.info(f"User {user_id} prompt: {text}")
             update.message.reply_text("Ошибка генерации изображения. Попробуйте позже.")
         return
 
