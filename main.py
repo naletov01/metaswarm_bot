@@ -144,26 +144,42 @@ def text_handler(update: Update, context: CallbackContext):
             if data.pop("upload_for_edit", False):
                 update.message.reply_text("⏳ Редактирую изображение через gpt-image-1…")
                 try:
-                    # 1) скачиваем оригинал прямо из Telegram
+                    # 1) Скачиваем оригинал из Telegram
                     tg_file = bot.get_file(data["last_image_id"])
                     orig_bytes = io.BytesIO(tg_file.download_as_bytearray())
             
-                    # 2) создаём маску того же размера (прозрачный RGBA)
+                    # 2) Открываем и конвертируем в RGBA
                     img = Image.open(orig_bytes).convert("RGBA")
+            
+                    # 3) Уменьшаем, если больше 1024px по любой стороне
+                    max_dim = 1024
+                    if max(img.size) > max_dim:
+                        img.thumbnail((max_dim, max_dim))
+            
+                    # 4) Сохраняем подготовленное изображение в PNG
+                    prepared = io.BytesIO()
+                    img.save(prepared, format="PNG")
+                    prepared.seek(0)
+            
+                    # 5) Создаём прозрачную маску того же размера
                     mask_img = Image.new("RGBA", img.size, (0, 0, 0, 0))
                     mask_buf = io.BytesIO()
                     mask_img.save(mask_buf, format="PNG")
                     mask_buf.seek(0)
-                    orig_bytes.seek(0)
             
-                    # 3) вызываем edit-endpoint без параметра model
+                    # 6) Вызываем edit-endpoint
                     resp = client.images.edit(
-                        image=("image.png", orig_bytes, "image/png"),
-                        mask=("mask.png", mask_buf, "image/png"),
+                        image=("image.png", prepared, "image/png"),
+                        mask=("mask.png",  mask_buf,  "image/png"),
                         prompt=text,
                         size="1024x1024",
                         n=1
                     )
+                except Exception as e:
+                    logger.error(f"Image edit failed: {e}")
+                    update.message.reply_text("Ошибка редактирования через gpt-image-1.")
+                    return
+                    
                 except Exception as e:
                     logger.error(f"Image edit failed: {e}")
                     update.message.reply_text("Ошибка редактирования через gpt-image-1.")
