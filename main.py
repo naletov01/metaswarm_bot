@@ -17,7 +17,7 @@ from telegram.ext import (
 from openai import OpenAI
 import replicate
 
-import requests, ioа
+import requests, io
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
