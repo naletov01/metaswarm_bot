@@ -140,56 +140,47 @@ def text_handler(update: Update, context: CallbackContext):
     # ——— Генерация изображения (T2I или I2I) ———
     if mode == "image":
         update.message.reply_text("⏳ Генерирую/правлю через gpt-image-1…")
-        if data.pop("upload_for_edit", False):
-            update.message.reply_text("⏳ Редактирую изображение через gpt-image-1…")
-            try:
-                # 1) Скачиваем оригинал из Telegram
+        try:
+            # определяем режим: правка или генерация
+            is_edit = data.pop("upload_for_edit", False)
+            if is_edit:
+                logger.info(f"CALL gpt-image-1 EDIT (I2I), prompt={text}")
                 tg_file = bot.get_file(data["last_image_id"])
                 orig_bytes = io.BytesIO(tg_file.download_as_bytearray())
-        
-                # 2) Открываем и конвертируем в RGBA
                 img = Image.open(orig_bytes).convert("RGBA")
-        
-                # 3) Уменьшаем, если любая сторона больше 1024px
                 if max(img.size) > 1024:
                     img.thumbnail((1024, 1024))
-        
-                # 4) Сохраняем подготовленное изображение в PNG
-                prepared = io.BytesIO()
-                img.save(prepared, format="PNG")
-                prepared.seek(0)
-        
-                # 5) Создаём прозрачную маску того же размера
+                prepared = io.BytesIO(); img.save(prepared, "PNG"); prepared.seek(0)
                 mask_buf = io.BytesIO()
-                Image.new("RGBA", img.size, (0, 0, 0, 0)).save(mask_buf, "PNG")
-                mask_buf.seek(0)
-        
-                # 6) Вызываем edit-эндпоинт без model=
+                Image.new("RGBA", img.size, (0,0,0,0)).save(mask_buf, "PNG"); mask_buf.seek(0)
                 resp = client.images.edit(
                     image=("image.png", prepared, "image/png"),
-                    mask=("mask.png",  mask_buf,  "image/png"),
+                    mask=("mask.png", mask_buf, "image/png"),
                     prompt=text,
                     size="1024x1024",
                     n=1
                 )
-            except Exception as e:
-                logger.error(f"Image edit failed: {e}")
-                update.message.reply_text("Ошибка редактирования через gpt-image-1.")
-                return
-        else:
-            resp = client.images.generate(
-                model="gpt-image-1",
-                prompt=text,
-                size="1024x1024",
-                n=1
+            else:
+                logger.info(f"CALL gpt-image-1 GENERATE (T2I), prompt={text}")
+                resp = client.images.generate(
+                    model="gpt-image-1",
+                    prompt=text,
+                    size="1024x1024",
+                    n=1
+                )
+    
+            url = resp.data[0].url
+            sent = update.message.reply_photo(photo=url)
+            data["last_image"]    = url
+            data["last_image_id"] = sent.photo[-1].file_id
+            limits["images"]     += 1
+            data["last_action"]   = time.time()
+    
+        except Exception as e:
+            logger.error(f"gpt-image-1 Images API failed: {e}")
+            update.message.reply_text(
+                "Ошибка генерации/редактирования через gpt-image-1. Проверьте настройки."
             )
-        
-        url = resp.data[0].url
-        sent = update.message.reply_photo(photo=url)
-        data["last_image"]    = url
-        data["last_image_id"] = sent.photo[-1].file_id
-        limits["images"]     += 1
-        data["last_action"]   = time.time()
         return
 
     # ——— Генерация видео ———
