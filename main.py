@@ -35,18 +35,17 @@ FUNCTIONS = [
       "required": ["prompt","size"]
     }
   },
-  {
+    {
     "name": "edit_image",
-    "description": "Редактирует ранее загруженное изображение по промпту и маске (RGBA)",
+    "description": "Редактирует ранее загруженное изображение по промпту",
     "parameters": {
       "type": "object",
       "properties": {
-        "prompt":      {"type":"string"},
-        "size":        {"type":"string", "enum":["1024x1024","512x512","256x256"]},
-        "image_file":  {"type":"string","description":"ID файла в Telegram"},
-        "mask_file":   {"type":"string","description":"PNG-маска в память как base64 или ID"}
+        "prompt":    {"type":"string"},
+        "size":      {"type":"string","enum":["1024x1024","512x512","256x256"]},
+        "image_url": {"type":"string","description":"URL исходного изображения"}
       },
-      "required": ["prompt","size","image_file"]
+      "required": ["prompt","size","image_url"]
     }
   }
 ]
@@ -173,11 +172,11 @@ def text_handler(update: Update, context: CallbackContext):
         messages = [
             {"role":"system","content":"Ты ассистент по генерации и редактированию изображений."}
         ]
-        if data.get("last_image_id"):
+        if data.get("last_image"):
             messages.append({
-                "role":"user",
-                "content":"Пожалуйста, отредактируй это изображение по промпту.",
-                "image_file": data["last_image_id"]
+                "role":    "user",
+                "content": "Пожалуйста, отредактируй это изображение по промпту.",
+                "image_url": data["last_image"]   # <-- вот сюда URL из Telegram
             })
         else:
             messages.append({"role":"user","content": text})
@@ -215,14 +214,14 @@ def text_handler(update: Update, context: CallbackContext):
             data["last_image"] = url
     
         elif name == "edit_image":
-            tg_file   = bot.get_file(args["image_file"])
-            img_bytes = tg_file.download_as_bytearray()
-            orig      = io.BytesIO(img_bytes)
-    
-            pil      = Image.open(orig).convert("RGBA")
-            mask     = Image.new("RGBA", pil.size, (0,0,0,0))
-            mb       = io.BytesIO(); mask.save(mb,"PNG"); mb.seek(0); orig.seek(0)
-    
+            orig_url = args["image_url"]
+            resp     = requests.get(orig_url)
+            orig     = io.BytesIO(resp.content)
+        
+            pil    = Image.open(orig).convert("RGBA")
+            mask   = Image.new("RGBA", pil.size, (0,0,0,0))
+            mb     = io.BytesIO(); mask.save(mb,"PNG"); mb.seek(0); orig.seek(0)
+        
             out = client.images.edit(
                 image  = ("image.png", orig, "image/png"),
                 mask   = ("mask.png",  mb,   "image/png"),
