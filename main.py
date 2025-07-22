@@ -122,14 +122,14 @@ def text_handler(update: Update, context: CallbackContext):
     data   = user_data.setdefault(user_id, {})
     limits = user_limits.setdefault(user_id, {"images": 0, "videos": 0})
 
-    # Защита от слишком частых запросов
+    # Спам-фильтр
     last = data.get("last_action", 0)
     if now - last < MIN_INTERVAL:
         wait = int(MIN_INTERVAL - (now - last))
         update.message.reply_text(f"Пожалуйста, подождите ещё {wait} сек.")
         return
 
-    # Выбор режима
+    # Кнопки
     if text in ["🖼 Картинка", "🎞 Видео"]:
         data["mode"] = "image" if "Картинка" in text else "video"
         update.message.reply_text("Введите текстовый промпт:")
@@ -138,62 +138,58 @@ def text_handler(update: Update, context: CallbackContext):
     mode = data.get("mode")
 
     # ——— Генерация изображения (T2I или I2I) ———
-        if data.get("mode") == "image":
-            update.message.reply_text("⏳ Генерирую/правлю через gpt-image-1…")
-            try:
-                # Image-to-Image?
-                if data.pop("upload_for_edit", False):
-                    # скачиваем последний URL
-                    response = requests.get(data["last_image"])
-                    orig = io.BytesIO(response.content)
-                    # пустая маска
-                    mask = io.BytesIO(b"\x89PNG\r\n\x1a\n")
-                    # вызываем edit-эндпоинт
-                    resp = client.images.edit(
-                        model="gpt-image-1",
-                        image=("image.png", orig, "image/png"),
-                        mask =("mask.png",  mask,  "image/png"),
-                        prompt=text,
-                        size="1024x1024",  # gpt-image-1 поддерживает квадрат
-                        n=1
-                    )
-                else:
-                    # Text-to-Image
-                    resp = client.images.generate(
-                        model="gpt-image-1",
-                        prompt=text,
-                        size="1024x1024",
-                        n=1
-                    )
-                # Получаем URL и шлём пользователю
-                url = resp.data[0].url
-                sent = update.message.reply_photo(photo=url)
-                data["last_image"]    = url
-                data["last_image_id"] = sent.photo[-1].file_id
-                limits["images"]     += 1
-                data["last_action"]   = time.time()
-    
-            except Exception as e:
-                logger.error(f"gpt-image-1 Images API failed: {e}")
-                update.message.reply_text(
-                    "Ошибка генерации/редактирования через gpt-image-1. "
-                    "Проверьте верификацию организации и баланс."
+    if mode == "image":
+        update.message.reply_text("⏳ Генерирую/правлю через gpt-image-1…")
+        try:
+            if data.pop("upload_for_edit", False):
+                # Image-to-Image
+                response = requests.get(data["last_image"])
+                orig = io.BytesIO(response.content)
+                mask = io.BytesIO(b"\x89PNG\r\n\x1a\n")  # пустая маска
+                resp = client.images.edit(
+                    model="gpt-image-1",
+                    image=("image.png", orig, "image/png"),
+                    mask =("mask.png", mask, "image/png"),
+                    prompt=text,
+                    size="1024x1024",
+                    n=1
                 )
-            return
-        
+            else:
+                # Text-to-Image
+                resp = client.images.generate(
+                    model="gpt-image-1",
+                    prompt=text,
+                    size="1024x1024",
+                    n=1
+                )
 
-    # — Генерация видео —
+            url = resp.data[0].url
+            sent = update.message.reply_photo(photo=url)
+            data["last_image"]    = url
+            data["last_image_id"] = sent.photo[-1].file_id
+            limits["images"]     += 1
+            data["last_action"]   = time.time()
+        except Exception as e:
+            logger.error(f"gpt-image-1 Images API failed: {e}")
+            update.message.reply_text(
+                "Ошибка генерации/редактирования через gpt-image-1. "
+                "Проверьте верификацию и баланс."
+            )
+        return
+
+    # ——— Генерация видео ———
     if mode == "video":
         last_img = data.get("last_image")
         if not last_img:
-            update.message.reply_text("Сначала сгенерируйте или загрузите изображение.")
+            update.message.reply_text(
+                "Сначала сгенерируйте или загрузите изображение."
+            )
             return
         if limits["videos"] >= 1:
             update.message.reply_text("Лимит видео-генераций исчерпан.")
             return
 
-        update.message.reply_text("⏳ Видео в работе, отправлю как будет готово.")
-        # Запуск в фоне
+        update.message.reply_text("⏳ Видео в работе, отпишусь, когда готово.")
         executor.submit(generate_and_send_video, user_id, last_img, text)
         return
 
