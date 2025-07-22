@@ -186,7 +186,16 @@ def text_handler(update: Update, context: CallbackContext):
             function_call="auto"
         )
     
-        fn   = resp.choices[0].message.function_call
+        msg = resp.choices[0].message
+
+        # функция вызвана?
+        fn = getattr(msg, "function_call", None)
+        if not fn or not getattr(fn, "name", None):
+            # случай, когда модель ничего не вызвала — просто шлём текст
+            text_reply = msg.content or "Извините, я не понял, попробуйте ещё раз."
+            update.message.reply_text(text_reply)
+            return
+        
         name = fn.name
         args = json.loads(fn.arguments)
     
