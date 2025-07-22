@@ -18,6 +18,7 @@ from openai import OpenAI
 import replicate
 
 import requests, io
+from PIL import Image
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
@@ -138,12 +139,21 @@ def text_handler(update: Update, context: CallbackContext):
         try:
             # Image-to-Image, если был флаг
             if data.pop("upload_for_edit", False):
-                resp_img = requests.get(data["last_image"])
-                img_file = io.BytesIO(resp_img.content)
-    
+                # скачиваем исходник
+                resp = requests.get(data["last_image"])
+                orig_bytes = io.BytesIO(resp.content)
+                # создаём маску того же размера, полностью прозрачную
+                orig_img = Image.open(orig_bytes).convert("RGBA")
+                mask_img = Image.new("RGBA", orig_img.size, (0, 0, 0, 0))
+                mask_bytes = io.BytesIO()
+                mask_img.save(mask_bytes, format="PNG")
+                mask_bytes.seek(0)
+                # возвращаем указатель исходного изображения тоже в начало
+                orig_bytes.seek(0)
+                
                 edit_resp = client.images.edit(
-                    image=img_file,
-                    mask=None,
+                    image=orig_bytes,
+                    mask=mask_bytes,
                     prompt=text,
                     n=1,
                     size="1024x1792"
