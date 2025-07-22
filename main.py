@@ -184,7 +184,7 @@ def text_handler(update: Update, context: CallbackContext):
     
         # Вызываем GPT с функциями
         resp = client.chat.completions.create(
-            model="chatgpt-4o-latest",   # или gpt-4o-mini
+            model="gpt-image-1",   # или gpt-4o-mini
             messages=messages,
             functions=FUNCTIONS,
             function_call="auto"
