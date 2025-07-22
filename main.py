@@ -167,38 +167,56 @@ def text_handler(update: Update, context: CallbackContext):
 
     # ——— Генерация изображения (T2I или I2I) ———
     if data.get("mode") == "image":
-        update.message.reply_text("⏳ Обрабатываю запрос через GPT-4 Vision…")
+        # 1) сначала проверяем: надо ли править существующее фото?
+        if data.pop("upload_for_edit", False):
+            update.message.reply_text("⏳ Редактирую изображение через gpt-image-1…")
+            try:
+                # скачиваем исходник
+                orig_bytes = io.BytesIO(requests.get(data["last_image"]).content)
+                # создаём полностью прозрачную маску
+                pil_img = Image.open(orig_bytes).convert("RGBA")
+                mask_img = Image.new("RGBA", pil_img.size, (0, 0, 0, 0))
+                mask_buf = io.BytesIO(); mask_img.save(mask_buf, "PNG"); mask_buf.seek(0); orig_bytes.seek(0)
     
-        # Собираем сообщения
-        messages = [
-            {"role":"system","content":"Ты ассистент по генерации и редактированию изображений."}
-        ]
-        if data.get("last_image"):
-            messages.append({
-                "role":    "user",
-                "content": "Пожалуйста, отредактируй это изображение по промпту.",
-                "image_url": data["last_image"]   # <-- вот сюда URL из Telegram
-            })
-        else:
-            messages.append({"role":"user","content": text})
-    
-        # Вызываем GPT с функциями
-        resp = client.chat.completions.create(
-            model="gpt-image-1",   # или gpt-4o-mini
-            messages=messages,
-            functions=FUNCTIONS,
-            function_call="auto"
-        )
-    
-        msg = resp.choices[0].message
-
-        # функция вызвана?
-        fn = getattr(msg, "function_call", None)
-        if not fn:
-            # ни одна функция не была вызвана — отправляем обычный текст
-            text = msg.content or "Извините, не понял."
-            update.message.reply_text(text)
+                # вызываем edit
+                resp = client.images.edit(
+                    model="gpt-image-1",
+                    image=("image.png", orig_bytes, "image/png"),
+                    mask = ("mask.png",  mask_buf,  "image/png"),
+                    prompt=text,
+                    size="1024x1024",
+                    n=1
+                )
+                url = resp.data[0].url
+                sent = update.message.reply_photo(photo=url)
+                data["last_image"]    = url
+                data["last_image_id"] = sent.photo[-1].file_id
+                limits["images"]     += 1
+                data["last_action"]   = time.time()
+            except Exception as e:
+                logger.error(f"Image edit failed: {e}")
+                update.message.reply_text("Ошибка редактирования изображения. Попробуйте позже.")
             return
+    
+        # 2) если править нечего — делаем обычный Text-to-Image
+        update.message.reply_text("⏳ Генерирую изображение через gpt-image-1…")
+        try:
+            resp = client.images.generate(
+                model="gpt-image-1",
+                prompt=text,
+                size="1024x1024",
+                n=1
+            )
+            url = resp.data[0].url
+            sent = update.message.reply_photo(photo=url)
+            data["last_image"]    = url
+            data["last_image_id"] = sent.photo[-1].file_id
+            limits["images"]     += 1
+            data["last_action"]   = time.time()
+        except Exception as e:
+            logger.error(f"Image generation failed: {e}")
+            update.message.reply_text("Ошибка генерации изображения. Попробуйте позже.")
+        return
         
         name = fn.name
         args = json.loads(fn.arguments)
