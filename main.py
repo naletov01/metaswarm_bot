@@ -17,10 +17,10 @@ from telegram.ext import (
 from openai import OpenAI
 import replicate
 
-import requests, io
+import re
+import requests
+import io
 from PIL import Image
-import json
-
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
@@ -138,57 +138,48 @@ def text_handler(update: Update, context: CallbackContext):
     mode = data.get("mode")
 
     # ——— Генерация изображения (T2I или I2I) ———
-    if data.get("mode") == "image":
-        # 1) сначала проверяем: надо ли править существующее фото?
-        if data.pop("upload_for_edit", False):
-            update.message.reply_text("⏳ Редактирую изображение через gpt-image-1…")
+        if data.get("mode") == "image":
+            update.message.reply_text("⏳ Генерирую/правлю через gpt-image-1…")
             try:
-                # скачиваем исходник
-                orig_bytes = io.BytesIO(requests.get(data["last_image"]).content)
-                # создаём полностью прозрачную маску
-                pil_img = Image.open(orig_bytes).convert("RGBA")
-                mask_img = Image.new("RGBA", pil_img.size, (0, 0, 0, 0))
-                mask_buf = io.BytesIO(); mask_img.save(mask_buf, "PNG"); mask_buf.seek(0); orig_bytes.seek(0)
-    
-                # вызываем edit
-                resp = client.images.edit(
-                    model="gpt-image-1",
-                    image=("image.png", orig_bytes, "image/png"),
-                    mask = ("mask.png",  mask_buf,  "image/png"),
-                    prompt=text,
-                    size="1024x1024",
-                    n=1
-                )
+                # Image-to-Image?
+                if data.pop("upload_for_edit", False):
+                    # скачиваем последний URL
+                    response = requests.get(data["last_image"])
+                    orig = io.BytesIO(response.content)
+                    # пустая маска
+                    mask = io.BytesIO(b"\x89PNG\r\n\x1a\n")
+                    # вызываем edit-эндпоинт
+                    resp = client.images.edit(
+                        model="gpt-image-1",
+                        image=("image.png", orig, "image/png"),
+                        mask =("mask.png",  mask,  "image/png"),
+                        prompt=text,
+                        size="1024x1024",  # gpt-image-1 поддерживает квадрат
+                        n=1
+                    )
+                else:
+                    # Text-to-Image
+                    resp = client.images.generate(
+                        model="gpt-image-1",
+                        prompt=text,
+                        size="1024x1024",
+                        n=1
+                    )
+                # Получаем URL и шлём пользователю
                 url = resp.data[0].url
                 sent = update.message.reply_photo(photo=url)
                 data["last_image"]    = url
                 data["last_image_id"] = sent.photo[-1].file_id
                 limits["images"]     += 1
                 data["last_action"]   = time.time()
-            except Exception as e:
-                logger.error(f"Image edit failed: {e}")
-                update.message.reply_text("Ошибка редактирования изображения. Попробуйте позже.")
-            return
     
-        # 2) если править нечего — делаем обычный Text-to-Image
-        update.message.reply_text("⏳ Генерирую изображение через gpt-image-1…")
-        try:
-            resp = client.images.generate(
-                model="gpt-image-1",
-                prompt=text,
-                size="1024x1024",
-                n=1
-            )
-            url = resp.data[0].url
-            sent = update.message.reply_photo(photo=url)
-            data["last_image"]    = url
-            data["last_image_id"] = sent.photo[-1].file_id
-            limits["images"]     += 1
-            data["last_action"]   = time.time()
-        except Exception as e:
-            logger.error(f"Image generation failed: {e}")
-            update.message.reply_text("Ошибка генерации изображения. Попробуйте позже.")
-        return
+            except Exception as e:
+                logger.error(f"gpt-image-1 Images API failed: {e}")
+                update.message.reply_text(
+                    "Ошибка генерации/редактирования через gpt-image-1. "
+                    "Проверьте верификацию организации и баланс."
+                )
+            return
         
 
     # — Генерация видео —
