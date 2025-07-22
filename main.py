@@ -166,7 +166,7 @@ def text_handler(update: Update, context: CallbackContext):
                     mask  = mask_param,
                     prompt=text,
                     n     = 1,
-                    size  = "1024x1792"
+                    size  = "1024x1024"
                 )
                 img_url = edit_resp.data[0].url
     
@@ -175,7 +175,7 @@ def text_handler(update: Update, context: CallbackContext):
                 gen_resp = client.images.generate(
                     model="dall-e-3",
                     prompt=text,
-                    size="1024x1792",
+                    size="1024x1024",
                     n=1
                 )
                 img_url = gen_resp.data[0].url
