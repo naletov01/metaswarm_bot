@@ -97,6 +97,7 @@ def image_upload_handler(update: Update, context: CallbackContext):
         file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
         data = user_data.setdefault(user_id, {})
         data["last_image"] = file_url
+        data["last_image_id"] = file_id
         data["upload_for_edit"] = True      # <-- флаг, что это исходное изображение для Image-to-Image
         update.message.reply_text(
             "Изображение сохранено для редактирования.\n"
@@ -139,18 +140,20 @@ def text_handler(update: Update, context: CallbackContext):
         try:
             # Image-to-Image, если был флаг
             if data.pop("upload_for_edit", False):
-                # скачиваем исходник
-                resp = requests.get(data["last_image"])
-                orig_bytes = io.BytesIO(resp.content)
-                # создаём маску того же размера, полностью прозрачную
+                # 1) Получаем File из Telegram по сохранённому file_id
+                tg_file = bot.get_file(data["last_image_id"])
+                img_bytes = tg_file.download_as_bytearray()        # <<< вот так
+                orig_bytes = io.BytesIO(img_bytes)
+            
+                # 2) Создаём полностью прозрачную маску (RGBA)
                 orig_img = Image.open(orig_bytes).convert("RGBA")
                 mask_img = Image.new("RGBA", orig_img.size, (0, 0, 0, 0))
                 mask_bytes = io.BytesIO()
                 mask_img.save(mask_bytes, format="PNG")
                 mask_bytes.seek(0)
-                # возвращаем указатель исходного изображения тоже в начало
                 orig_bytes.seek(0)
-                
+            
+                # 3) Вызываем edit-эндпоинт
                 edit_resp = client.images.edit(
                     image=orig_bytes,
                     mask=mask_bytes,
