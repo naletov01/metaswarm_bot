@@ -21,34 +21,6 @@ import requests, io
 from PIL import Image
 import json
 
-FUNCTIONS = [
-  {
-    "name": "generate_image",
-    "description": "Создаёт изображение по текстовому промпту",
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "prompt":   {"type":"string", "description":"Текстовый промпт"},
-        "size":     {"type":"string", "enum":["1024x1024","512x512","256x256"]},
-        "n":        {"type":"integer", "default":1}
-      },
-      "required": ["prompt","size"]
-    }
-  },
-    {
-    "name": "edit_image",
-    "description": "Редактирует ранее загруженное изображение по промпту",
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "prompt":    {"type":"string"},
-        "size":      {"type":"string","enum":["1024x1024","512x512","256x256"]},
-        "image_url": {"type":"string","description":"URL исходного изображения"}
-      },
-      "required": ["prompt","size","image_url"]
-    }
-  }
-]
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
