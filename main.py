@@ -133,6 +133,7 @@ def image_upload_handler(update: Update, context: CallbackContext):
         data["last_image"] = file_url
         data["last_image_id"] = file_id
         data["upload_for_edit"] = True      # <-- флаг, что это исходное изображение для Image-to-Image
+        data["mode"] = "image"
         update.message.reply_text(
             "Изображение сохранено для редактирования.\n"
             "Теперь введите текстовый промпт — будет использоваться вместе с загруженной картинкой."
@@ -183,7 +184,7 @@ def text_handler(update: Update, context: CallbackContext):
     
         # Вызываем GPT с функциями
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",   # или gpt-4vision
+            model="gpt-4vision",   # или gpt-4o-mini
             messages=messages,
             functions=FUNCTIONS,
             function_call="auto"
@@ -210,8 +211,10 @@ def text_handler(update: Update, context: CallbackContext):
                 n=args.get("n",1)
             )
             url = img.data[0].url
-            update.message.reply_photo(photo=url)
+            sent = update.message.reply_photo(photo=url)
             data["last_image"] = url
+            # Telegram сохранит фото и даст новый file_id — сохраняем его
+            data["last_image_id"] = sent.photo[-1].file_id
     
         elif name == "edit_image":
             orig_url = args["image_url"]
@@ -230,8 +233,10 @@ def text_handler(update: Update, context: CallbackContext):
                 n      = args.get("n",1)
             )
             url = out.data[0].url
-            update.message.reply_photo(photo=url)
+            sent = update.message.reply_photo(photo=url)
             data["last_image"] = url
+            # Telegram сохранит фото и даст новый file_id — сохраняем его
+            data["last_image_id"] = sent.photo[-1].file_id
     
         data.pop("upload_for_edit", None)
         limits["images"] += 1
