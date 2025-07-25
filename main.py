@@ -115,7 +115,7 @@ def generate_and_send_video(user_id):
         else:
             raise ValueError("Unknown model selected")
 
-        video_url = output
+        video_url = output.url
         logger.info(f"[{user_id}] ✅ Видео готово: {video_url}")
         
         # 🔍 HEAD-запрос к файлу (проверка доступности)
