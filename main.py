@@ -18,8 +18,6 @@ import replicate
 import tempfile
 import requests
 import httpx
-import subprocess
-from PIL import Image
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
@@ -69,13 +67,6 @@ def generate_and_send_video(user_id):
             with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
                 tmp_file.write(response.content)
                 tmp_file.flush()
-
-            img = Image.open(tmp_file.name)
-            w, h = img.size
-            width = (w // 2) * 2
-            height = (h // 2) * 2
-            img.close()
-            
             image_input = open(tmp_file.name, "rb")
 
         # Вызов нужной модели
@@ -139,9 +130,9 @@ def generate_and_send_video(user_id):
             bot.send_message(chat_id=user_id, text="⚠️ Не удалось проверить видео. Вот ссылка:\n" + video_url)
             return
         
-        # ✅ Отправка видео с сохранением исходного разрешения
+        # ✅ Отправка видео в Telegram (скачаем сами и зальём)
         try:
-            # 1. Скачиваем видео в tmp_path
+            # 1. Скачиваем в tmp-файл
             with requests.get(video_url, stream=True) as r:
                 r.raise_for_status()
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_vid:
@@ -149,17 +140,12 @@ def generate_and_send_video(user_id):
                         tmp_vid.write(chunk)
                     tmp_path = tmp_vid.name
 
-            # 2. Масштабируем его через ffmpeg под исходный размер
-            fixed_path = tmp_path.replace(".mp4", "_fixed.mp4")
-            subprocess.run([
-                "ffmpeg", "-i", tmp_path,
-                "-vf", f"scale={width}:{height}",
-                fixed_path
-            ], check=True)
+            # 2. Открываем и посылаем как файл
+            with open(tmp_path, 'rb') as video_file:
+                bot.send_video(chat_id=user_id, video=video_file)
 
-            # 3. Отправляем уже отмасштабированный файл
-            with open(fixed_path, "rb") as vf:
-                bot.send_video(chat_id=user_id, video=vf)
+            # 3. Удаляем временный файл
+            os.remove(tmp_path)
 
         except Exception as e:
             logger.error(f"[{user_id}] ❌ Ошибка отправки видео: {e}")
@@ -167,13 +153,6 @@ def generate_and_send_video(user_id):
                 chat_id=user_id,
                 text="⚠️ Не удалось загрузить видео напрямую. Вот ссылка:\n" + video_url
             )
-        finally:
-            # 4. Чистим оба файла
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-            if os.path.exists(fixed_path):
-                os.remove(fixed_path)
-
         
         # ⏱ Обновляем лимиты
         user_limits.setdefault(user_id, {})["videos"] = user_limits[user_id].get("videos", 0) + 1
