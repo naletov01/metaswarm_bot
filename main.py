@@ -17,6 +17,7 @@ from telegram.ext import (
 import replicate
 import tempfile
 import requests
+import httpx
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
@@ -53,23 +54,24 @@ def generate_and_send_video(user_id):
 
     try:
         logger.info(f"Start video generation: model={model}, prompt={prompt}")
+        logger.info(f"[{user_id}] 🌀 Генерация видео запущена...")
 
         # Скачиваем изображение из Telegram, если оно нужно
         tmp_file = None
-        image_input = None
         if model in ["kling-standard", "kling-pro", "kling-master"]:
             if not image_url:
                 bot.send_message(chat_id=user_id, text="Сначала загрузите изображение.")
                 return
             response = requests.get(image_url)
             response.raise_for_status()
-            tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-            tmp_file.write(response.content)
-            tmp_file.flush()
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
+                tmp_file.write(response.content)
+                tmp_file.flush()
             image_input = open(tmp_file.name, "rb")
 
         # Вызов нужной модели
         if model == "kling-standard":
+            logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
             output = replicate.run(
                 "kwaivgi/kling-v2.1",
                 input={
@@ -81,6 +83,7 @@ def generate_and_send_video(user_id):
                 }
             )
         elif model == "kling-pro":
+            logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
             output = replicate.run(
                 "kwaivgi/kling-v2.1",
                 input={
@@ -92,6 +95,7 @@ def generate_and_send_video(user_id):
                 }
             )
         elif model == "kling-master":
+            logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
             output = replicate.run(
                 "kwaivgi/kling-v2.1-master",
                 input={
@@ -103,6 +107,7 @@ def generate_and_send_video(user_id):
                 }
             )
         elif model == "veo":
+            logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
             output = replicate.run(
                 "google/veo-3-fast",
                 input={"prompt": prompt}
@@ -111,15 +116,39 @@ def generate_and_send_video(user_id):
             raise ValueError("Unknown model selected")
 
         video_url = output
+        logger.info(f"[{user_id}] ✅ Видео готово: {video_url}")
+        
+        # 🔍 HEAD-запрос к файлу (проверка доступности)
+        try:
+            check = httpx.head(video_url, timeout=10)
+            logger.info(f"[{user_id}] HEAD status: {check.status_code}")
+            if check.status_code != 200:
+                bot.send_message(chat_id=user_id, text="⚠️ Видео ещё не готово. Попробуйте позже.\n" + video_url)
+                return
+        except Exception as e:
+            logger.warning(f"[{user_id}] HEAD-запрос не удался: {e}")
+            bot.send_message(chat_id=user_id, text="⚠️ Не удалось проверить видео. Вот ссылка:\n" + video_url)
+            return
+        
+        # ✅ Отправка видео в Telegram
+        try:
+            bot.send_video(chat_id=user_id, video=video_url)
+        except Exception as e:
+            logger.error(f"[{user_id}] ❌ Ошибка отправки видео: {e}")
+            bot.send_message(chat_id=user_id, text="⚠️ Видео слишком большое или произошла ошибка.\nВот ссылка:\n" + video_url)
+        
+        # ⏱ Обновляем лимиты
         user_limits.setdefault(user_id, {})["videos"] = user_limits[user_id].get("videos", 0) + 1
-        bot.send_video(chat_id=user_id, video=video_url)
 
     except Exception as e:
         logger.error(f"Video generation error: {e}")
         bot.send_message(chat_id=user_id, text="❌ Ошибка генерации видео. Попробуйте позже.")
     finally:
-        if image_input:
-            image_input.close()
+        if tmp_file:
+            try:
+                os.remove(tmp_file.name)
+            except Exception as e:
+                logger.warning(f"Не удалось удалить временный файл: {e}")
         if tmp_file:
             os.remove(tmp_file.name)
 
@@ -155,7 +184,7 @@ def image_upload_handler(update: Update, context: CallbackContext):
             prompt = update.message.caption.strip()
             data["prompt"] = prompt
             update.message.reply_text("⏳ Генерирую видео по изображению и промпту…")
-            executor.submit(generate_and_send_video, user_id, file_url, prompt)
+            executor.submit(generate_and_send_video, user_id)
         else:
             update.message.reply_text("Изображение получено. Теперь введите промпт для генерации видео.")
     except Exception as e:
