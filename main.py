@@ -49,7 +49,7 @@ def generate_and_send_video(user_id):
     data = user_data.get(user_id, {})
     image_url = data.get("last_image")
     prompt    = data.get("prompt")
-    model     = data.get("model", "kling-standard")
+    model     = data.get("model", "kling-pro")
 
     try:
         logger.info(f"Start video generation: model={model}, prompt={prompt}")
