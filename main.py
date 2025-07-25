@@ -92,6 +92,8 @@ def generate_and_send_video(user_id):
                     "duration": 5,
                     "start_image": image_input,
                     "negative_prompt": ""
+                    "width": width,
+                    "height": height
                 }
             )
         elif model == "kling-master":
