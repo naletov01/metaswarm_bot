@@ -130,16 +130,31 @@ def generate_and_send_video(user_id):
             bot.send_message(chat_id=user_id, text="⚠️ Не удалось проверить видео. Вот ссылка:\n" + video_url)
             return
         
-        # ✅ Отправка ролика как документ (без ресайза и перекодировки)
+         # ✅ Отправка ролика как документ (скачаем и перешлём сами)
         try:
-            # просто шлём URL в Telegram как документ
-            bot.send_document(chat_id=user_id, document=video_url)
+            # 1) скачиваем видео из replicate в tmp-файл
+            with requests.get(video_url, stream=True) as r:
+                r.raise_for_status()
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_vid:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        tmp_vid.write(chunk)
+                    tmp_path = tmp_vid.name
+
+            # 2) отправляем как документ (filename — необязательно, но полезно)
+            with open(tmp_path, "rb") as f:
+                bot.send_document(chat_id=user_id, document=f, filename="video.mp4")
+
         except Exception as e:
             logger.error(f"[{user_id}] ❌ Ошибка отправки документа: {e}")
             bot.send_message(
                 chat_id=user_id,
-                text="⚠️ Не удалось отправить видео как документ. Вот ссылка:\n" + video_url
+                text="⚠️ Не удалось отправить видео. Вот ссылка:\n" + video_url
             )
+        finally:
+            # 3) убираем временный файл
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
 
         # ⏱ Обновляем лимиты
         user_limits.setdefault(user_id, {})["videos"] = user_limits[user_id].get("videos", 0) + 1
