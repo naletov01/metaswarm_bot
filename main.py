@@ -130,12 +130,29 @@ def generate_and_send_video(user_id):
             bot.send_message(chat_id=user_id, text="⚠️ Не удалось проверить видео. Вот ссылка:\n" + video_url)
             return
         
-        # ✅ Отправка видео в Telegram
+        # ✅ Отправка видео в Telegram (скачаем сами и зальём)
         try:
-            bot.send_video(chat_id=user_id, video=video_url)
+            # 1. Скачиваем в tmp-файл
+            with requests.get(video_url, stream=True) as r:
+                r.raise_for_status()
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_vid:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        tmp_vid.write(chunk)
+                    tmp_path = tmp_vid.name
+
+            # 2. Открываем и посылаем как файл
+            with open(tmp_path, 'rb') as video_file:
+                bot.send_video(chat_id=user_id, video=video_file)
+
+            # 3. Удаляем временный файл
+            os.remove(tmp_path)
+
         except Exception as e:
             logger.error(f"[{user_id}] ❌ Ошибка отправки видео: {e}")
-            bot.send_message(chat_id=user_id, text="⚠️ Видео слишком большое или произошла ошибка.\nВот ссылка:\n" + video_url)
+            bot.send_message(
+                chat_id=user_id,
+                text="⚠️ Не удалось загрузить видео напрямую. Вот ссылка:\n" + video_url
+            )
         
         # ⏱ Обновляем лимиты
         user_limits.setdefault(user_id, {})["videos"] = user_limits[user_id].get("videos", 0) + 1
