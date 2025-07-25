@@ -15,6 +15,8 @@ from telegram.ext import (
     CallbackContext,
 )
 import replicate
+import tempfile
+import requests
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
@@ -45,30 +47,82 @@ MIN_INTERVAL = 5  # сек между запросами
 # ——— Фоновая генерация видео ———
 def generate_and_send_video(user_id):
     data = user_data.get(user_id, {})
-    image = data.get("last_image")
-    prompt = data.get("prompt")
-    model = data.get("model", "kling-standard")
+    image_url = data.get("last_image")
+    prompt    = data.get("prompt")
+    model     = data.get("model", "kling-standard")
 
     try:
         logger.info(f"Start video generation: model={model}, prompt={prompt}")
 
+        # Скачиваем изображение из Telegram, если оно нужно
+        tmp_file = None
+        image_input = None
+        if model in ["kling-standard", "kling-pro", "kling-master"]:
+            if not image_url:
+                bot.send_message(chat_id=user_id, text="Сначала загрузите изображение.")
+                return
+            response = requests.get(image_url)
+            response.raise_for_status()
+            tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            tmp_file.write(response.content)
+            tmp_file.flush()
+            image_input = open(tmp_file.name, "rb")
+
+        # Вызов нужной модели
         if model == "kling-standard":
-            output = replicate.run("kwaivgi/kling-v2.1", input={"mode": "standard", "prompt": prompt, "duration": 5, "start_image": image, "negative_prompt": ""})
+            output = replicate.run(
+                "kwaivgi/kling-v2.1",
+                input={
+                    "mode": "standard",
+                    "prompt": prompt,
+                    "duration": 5,
+                    "start_image": image_input,
+                    "negative_prompt": ""
+                }
+            )
         elif model == "kling-pro":
-            output = replicate.run("kwaivgi/kling-v2.1", input={"mode": "pro", "prompt": prompt, "duration": 5, "start_image": image, "negative_prompt": ""})
+            output = replicate.run(
+                "kwaivgi/kling-v2.1",
+                input={
+                    "mode": "pro",
+                    "prompt": prompt,
+                    "duration": 5,
+                    "start_image": image_input,
+                    "negative_prompt": ""
+                }
+            )
         elif model == "kling-master":
-            output = replicate.run("kwaivgi/kling-v2.1-master", input={"prompt": prompt, "duration": 5, "aspect_ratio": "16:9", "negative_prompt": ""})
+            output = replicate.run(
+                "kwaivgi/kling-v2.1-master",
+                input={
+                    "prompt": prompt,
+                    "duration": 5,
+                    "aspect_ratio": "16:9",
+                    "start_image": image_input,
+                    "negative_prompt": ""
+                }
+            )
         elif model == "veo":
-            output = replicate.run("google/veo-3-fast", input={"prompt": prompt})
+            output = replicate.run(
+                "google/veo-3-fast",
+                input={"prompt": prompt}
+            )
         else:
             raise ValueError("Unknown model selected")
 
-        video_url = output.url()
+        video_url = output
         user_limits.setdefault(user_id, {})["videos"] = user_limits[user_id].get("videos", 0) + 1
         bot.send_video(chat_id=user_id, video=video_url)
+
     except Exception as e:
         logger.error(f"Video generation error: {e}")
-        bot.send_message(chat_id=user_id, text="Ошибка генерации видео. Попробуйте позже.")
+        bot.send_message(chat_id=user_id, text="❌ Ошибка генерации видео. Попробуйте позже.")
+    finally:
+        if image_input:
+            image_input.close()
+        if tmp_file:
+            os.remove(tmp_file.name)
+
 
 # ——— Хендлеры ———
 def start(update: Update, context: CallbackContext):
@@ -90,12 +144,24 @@ def image_upload_handler(update: Update, context: CallbackContext):
     try:
         file = context.bot.get_file(file_id)
         file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
+
         data = user_data.setdefault(user_id, {})
         data["last_image"] = file_url
-        update.message.reply_text("Изображение сохранено. Теперь введите текстовый промпт.")
+        data["last_image_id"] = file_id
+        data["mode"] = "video"  # поскольку в новом флоу только видео
+
+        # 📌 если пользователь сразу указал подпись
+        if update.message.caption:
+            prompt = update.message.caption.strip()
+            data["prompt"] = prompt
+            update.message.reply_text("⏳ Генерирую видео по изображению и промпту…")
+            executor.submit(generate_and_send_video, user_id, file_url, prompt)
+        else:
+            update.message.reply_text("Изображение получено. Теперь введите промпт для генерации видео.")
     except Exception as e:
         logger.error(f"Error saving uploaded image: {e}")
         update.message.reply_text("Не удалось сохранить изображение. Попробуйте ещё раз.")
+        
 
 def text_handler(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
