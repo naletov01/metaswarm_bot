@@ -172,7 +172,7 @@ def image_upload_handler(update: Update, context: CallbackContext):
 
     try:
         file = context.bot.get_file(file_id)
-        file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
+        file_url = file.file_path
 
         data = user_data.setdefault(user_id, {})
         data["last_image"] = file_url
