@@ -14,13 +14,7 @@ from telegram.ext import (
     Filters,
     CallbackContext,
 )
-from openai import OpenAI
 import replicate
-
-import re
-import requests
-import io
-from PIL import Image
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
@@ -28,68 +22,63 @@ logger = logging.getLogger(__name__)
 
 # ——— Конфиг ———
 BOT_TOKEN           = os.getenv("BOT_TOKEN")
-WEBHOOK_SECRET      = os.getenv("WEBHOOK_SECRET")  # задайте в Render отдельно
+WEBHOOK_SECRET      = os.getenv("WEBHOOK_SECRET")
 WEBHOOK_PATH        = f"/webhook/{WEBHOOK_SECRET}"
-OPENAI_API_KEY      = os.getenv("OPENAI_API_KEY")
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 
-if not all([BOT_TOKEN, WEBHOOK_SECRET, OPENAI_API_KEY, REPLICATE_API_TOKEN]):
+if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
     logger.error("Missing required environment variables")
     raise RuntimeError("Missing API keys or webhook secret")
 
-# ——— Инициализация ———
 bot = Bot(token=BOT_TOKEN)
 app = FastAPI()
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
-
-client = OpenAI(api_key=OPENAI_API_KEY)
 replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
-
 executor = ThreadPoolExecutor(max_workers=2)
 
 # ——— In-memory хранилище ———
-user_data   = {}  # user_id → {"mode": ..., "last_image": ..., "last_action": timestamp}
-user_limits = {}  # user_id → {"images": int, "videos": int}
+user_data = {}  # user_id → {"last_image": ..., "last_action": ..., "prompt": ..., "model": ...}
+user_limits = {}  # user_id → {"videos": int}
 
 MIN_INTERVAL = 5  # сек между запросами
 
-# ——— Вспомогательная функция для фоновой генерации видео ———
-def generate_and_send_video(user_id, last_img, prompt):
-    data   = user_data.setdefault(user_id, {})
-    limits = user_limits.setdefault(user_id, {"images": 0, "videos": 0})
+# ——— Фоновая генерация видео ———
+def generate_and_send_video(user_id):
+    data = user_data.get(user_id, {})
+    image = data.get("last_image")
+    prompt = data.get("prompt")
+    model = data.get("model", "kling-standard")
+
     try:
-        output = replicate.run(
-            "kwaivgi/kling-v2.1",
-            input={
-                "mode": "pro",
-                "prompt": prompt,
-                "duration": 5,
-                "start_image": last_img,
-                "negative_prompt": "",
-            },
-        )
+        logger.info(f"Start video generation: model={model}, prompt={prompt}")
+
+        if model == "kling-standard":
+            output = replicate.run("kwaivgi/kling-v2.1", input={"mode": "standard", "prompt": prompt, "duration": 5, "start_image": image, "negative_prompt": ""})
+        elif model == "kling-pro":
+            output = replicate.run("kwaivgi/kling-v2.1", input={"mode": "pro", "prompt": prompt, "duration": 5, "start_image": image, "negative_prompt": ""})
+        elif model == "kling-master":
+            output = replicate.run("kwaivgi/kling-v2.1-master", input={"prompt": prompt, "duration": 5, "aspect_ratio": "16:9", "negative_prompt": ""})
+        elif model == "veo":
+            output = replicate.run("google/veo-3-fast", input={"prompt": prompt})
+        else:
+            raise ValueError("Unknown model selected")
+
         video_url = output.url()
-        limits["videos"]    += 1
-        data["last_action"]  = time.time()
+        user_limits.setdefault(user_id, {})["videos"] = user_limits[user_id].get("videos", 0) + 1
         bot.send_video(chat_id=user_id, video=video_url)
     except Exception as e:
-        logger.error(f"Background video generation failed: {e}")
+        logger.error(f"Video generation error: {e}")
         bot.send_message(chat_id=user_id, text="Ошибка генерации видео. Попробуйте позже.")
 
 # ——— Хендлеры ———
-def error_handler(update, context):
-    logger.exception("Unhandled error in update")
-dp.add_error_handler(error_handler)
-
 def start(update: Update, context: CallbackContext):
-    keyboard = [["🖼 Картинка", "🎞 Видео"]]
+    keyboard = [["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"], ["🎞 Видео (Kling Master)", "🎞 Видео (Veo)"]]
     markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
-    update.message.reply_text("Выберите тип генерации:", reply_markup=markup)
+    update.message.reply_text("Выберите модель генерации видео:", reply_markup=markup)
 
 def image_upload_handler(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
 
-    # Обрабатываем фото или документ-изображение
     if update.message.photo:
         file_id = update.message.photo[-1].file_id
     elif update.message.document and update.message.document.mime_type.startswith("image/"):
@@ -103,115 +92,52 @@ def image_upload_handler(update: Update, context: CallbackContext):
         file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
         data = user_data.setdefault(user_id, {})
         data["last_image"] = file_url
-        data["last_image_id"] = file_id
-        data["upload_for_edit"] = True      # <-- флаг, что это исходное изображение для Image-to-Image
-        data["mode"] = "image"
-        update.message.reply_text(
-            "Изображение сохранено для редактирования.\n"
-            "Теперь введите текстовый промпт — будет использоваться вместе с загруженной картинкой."
-        )
+        update.message.reply_text("Изображение сохранено. Теперь введите текстовый промпт.")
     except Exception as e:
         logger.error(f"Error saving uploaded image: {e}")
         update.message.reply_text("Не удалось сохранить изображение. Попробуйте ещё раз.")
 
 def text_handler(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
-    text    = update.message.text.strip()
-    now     = time.time()
+    text = update.message.text.strip()
+    now = time.time()
+    data = user_data.setdefault(user_id, {})
+    limits = user_limits.setdefault(user_id, {"videos": 0})
 
-    data   = user_data.setdefault(user_id, {})
-    limits = user_limits.setdefault(user_id, {"images": 0, "videos": 0})
-
-    # Спам-фильтр
+    # Защита от спама
     last = data.get("last_action", 0)
     if now - last < MIN_INTERVAL:
         wait = int(MIN_INTERVAL - (now - last))
         update.message.reply_text(f"Пожалуйста, подождите ещё {wait} сек.")
         return
 
-    # Кнопки
-    if text in ["🖼 Картинка", "🎞 Видео"]:
-        data["mode"] = "image" if "Картинка" in text else "video"
-        update.message.reply_text("Введите текстовый промпт:")
+    # Обработка выбора модели
+    model_map = {
+        "🎞 Видео (Kling Standard)": "kling-standard",
+        "🎞 Видео (Kling Pro)": "kling-pro",
+        "🎞 Видео (Kling Master)": "kling-master",
+        "🎞 Видео (Veo)": "veo",
+    }
+    if text in model_map:
+        data["model"] = model_map[text]
+        update.message.reply_text("Выбран режим. Теперь загрузите изображение и/или введите промпт.")
         return
 
-    mode = data.get("mode")
-
-    # ——— Генерация изображения (T2I или I2I) ———
-    if mode == "image":
-        update.message.reply_text("⏳ Генерирую/правлю через gpt-image-1…")
-        try:
-            # определяем режим: правка или генерация
-            is_edit = data.pop("upload_for_edit", False)
-            if is_edit:
-                logger.info(f"CALL gpt-image-1 EDIT (I2I), prompt={text}")
-                tg_file = bot.get_file(data["last_image_id"])
-                orig_bytes = io.BytesIO(tg_file.download_as_bytearray())
-                img = Image.open(orig_bytes).convert("RGBA")
-                if max(img.size) > 1024:
-                    img.thumbnail((1024, 1024))
-                prepared = io.BytesIO(); img.save(prepared, "PNG"); prepared.seek(0)
-                mask_buf = io.BytesIO()
-                Image.new("RGBA", img.size, (0,0,0,0)).save(mask_buf, "PNG"); mask_buf.seek(0)
-                resp = client.images.edit(
-                    image=("image.png", prepared, "image/png"),
-                    mask=("mask.png", mask_buf, "image/png"),
-                    prompt=text,
-                    size="1024x1024",
-                    n=1
-                )
-            else:
-                logger.info(f"CALL gpt-image-1 GENERATE (T2I), prompt={text}")
-                resp = client.images.generate(
-                    model="gpt-image-1",
-                    prompt=text,
-                    size="1024x1024",
-                    n=1
-                )
-    
-            url = resp.data[0].url
-            sent = update.message.reply_photo(photo=url)
-            data["last_image"]    = url
-            data["last_image_id"] = sent.photo[-1].file_id
-            limits["images"]     += 1
-            data["last_action"]   = time.time()
-    
-        except Exception as e:
-            logger.error(f"gpt-image-1 Images API failed: {e}")
-            update.message.reply_text(
-                "Ошибка генерации/редактирования через gpt-image-1. Проверьте настройки."
-            )
-        return
-
-    # ——— Генерация видео ———
-    if mode == "video":
-        last_img = data.get("last_image")
-        if not last_img:
-            update.message.reply_text(
-                "Сначала сгенерируйте или загрузите изображение."
-            )
-            return
-        if limits["videos"] >= 1:
-            update.message.reply_text("Лимит видео-генераций исчерпан.")
-            return
-
-        update.message.reply_text("⏳ Видео в работе, отпишусь, когда готово.")
-        executor.submit(generate_and_send_video, user_id, last_img, text)
-        return
-
-    update.message.reply_text("Непонятно. Используйте /start для начала.")
+    # Обработка промпта
+    if data.get("last_image") and data.get("model"):
+        data["prompt"] = text
+        data["last_action"] = now
+        update.message.reply_text("⏳ Видео генерируется…")
+        executor.submit(generate_and_send_video, user_id)
+    else:
+        update.message.reply_text("Пожалуйста, сначала выберите модель и загрузите изображение.")
 
 # ——— Регистрация хендлеров ———
 dp.add_handler(CommandHandler("start", start))
-dp.add_handler(
-    MessageHandler(
-        Filters.photo | (Filters.document & Filters.document.mime_type("image/")),
-        image_upload_handler
-    )
-)
+dp.add_handler(MessageHandler(Filters.photo | (Filters.document & Filters.document.mime_type("image/")), image_upload_handler))
 dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
 
-# ——— Webhook endpoint (секрет в URL) ———
+# ——— Webhook endpoint ———
 @app.post(WEBHOOK_PATH)
 async def telegram_webhook(request: Request):
     try:
