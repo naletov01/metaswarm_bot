@@ -18,6 +18,7 @@ import replicate
 import tempfile
 import requests
 import httpx
+from PIL import Image
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
@@ -67,6 +68,12 @@ def generate_and_send_video(user_id):
             with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
                 tmp_file.write(response.content)
                 tmp_file.flush()
+
+            # вот это вставьте:
+            img = Image.open(tmp_file.name)
+            width, height = img.size
+            img.close()
+
             image_input = open(tmp_file.name, "rb")
 
         # Вызов нужной модели
