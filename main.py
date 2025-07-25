@@ -71,7 +71,9 @@ def generate_and_send_video(user_id):
                 tmp_file.flush()
 
             img = Image.open(tmp_file.name)
-            width, height = img.size
+            w, h = img.size
+            width = (w // 2) * 2
+            height = (h // 2) * 2
             img.close()
             
             image_input = open(tmp_file.name, "rb")
