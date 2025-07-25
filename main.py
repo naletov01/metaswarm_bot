@@ -91,7 +91,7 @@ def generate_and_send_video(user_id):
                     "prompt": prompt,
                     "duration": 5,
                     "start_image": image_input,
-                    "negative_prompt": ""
+                    "negative_prompt": "",
                     "width": width,
                     "height": height
                 }
