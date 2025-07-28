@@ -39,6 +39,13 @@ NEGATIVE_PROMPT = (
     "jpeg artifacts, cropped, duplicate"
 )
 
+# ——— Positive Prompt ———
+POSITIVE_PROMPT = (
+    "masterpiece, best quality, high resolution, cinematic lighting, detailed, "
+    "perfect composition, ultra realistic, 4k, colorful, sharp focus, "
+    "depth of field, detailed eyes, perfect eyes, realistic eyes"
+)
+
 if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
     logger.error("Missing required environment variables")
     raise RuntimeError("Missing API keys or webhook secret")
@@ -86,7 +93,7 @@ def generate_and_send_video(user_id):
                 "kwaivgi/kling-v2.1",
                 input={
                     "mode": "standard",
-                    "prompt": prompt,
+                    "prompt": f"{POSITIVE_PROMPT}, {prompt}",
                     "duration": 5,
                     "start_image": image_input,
                     "negative_prompt": NEGATIVE_PROMPT
@@ -98,7 +105,7 @@ def generate_and_send_video(user_id):
                 "kwaivgi/kling-v2.1",
                 input={
                     "mode": "pro",
-                    "prompt": prompt,
+                    "prompt": f"{POSITIVE_PROMPT}, {prompt}",
                     "duration": 5,
                     "start_image": image_input,
                     "negative_prompt": NEGATIVE_PROMPT
@@ -109,7 +116,7 @@ def generate_and_send_video(user_id):
             output = replicate.run(
                 "kwaivgi/kling-v2.1-master",
                 input={
-                    "prompt": prompt,
+                    "prompt": f"{POSITIVE_PROMPT}, {prompt}",
                     "duration": 5,
                     "aspect_ratio": "9:16",
                     "start_image": image_input,
