@@ -132,18 +132,17 @@ def generate_and_send_video(user_id):
         
          # ✅ Отправка ролика как документ (скачаем и перешлём сами)
         try:
-            # 1) скачиваем видео из replicate в tmp-файл
-            with requests.get(video_url, stream=True) as r:
-                r.raise_for_status()
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_vid:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        tmp_vid.write(chunk)
-                    tmp_path = tmp_vid.name
-
-            # 2) отправляем как документ (filename — необязательно, но полезно)
+            # скачиваем видео из replicate в tmp‑файл
+            resp = requests.get(video_url, stream=True)
+            resp.raise_for_status()
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_vid:
+                for chunk in resp.iter_content(chunk_size=8192):
+                    tmp_vid.write(chunk)
+                tmp_path = tmp_vid.name
+        
+            # отправляем как документ
             with open(tmp_path, "rb") as f:
                 bot.send_document(chat_id=user_id, document=f, filename="video.mp4")
-
         except Exception as e:
             logger.error(f"[{user_id}] ❌ Ошибка отправки документа: {e}")
             bot.send_message(
@@ -151,9 +150,9 @@ def generate_and_send_video(user_id):
                 text="⚠️ Не удалось отправить видео. Вот ссылка:\n" + video_url
             )
         finally:
-            # 3) убираем временный файл
-            if os.path.exists(tmp_path):
+            if 'tmp_path' in locals() and os.path.exists(tmp_path):
                 os.remove(tmp_path)
+
 
 
         # ⏱ Обновляем лимиты
