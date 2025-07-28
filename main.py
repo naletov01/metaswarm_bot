@@ -52,8 +52,11 @@ POSITIVE_PROMPT = (
     "depth of field, detailed eyes, perfect eyes, realistic eyes"
 )
 
+
 # ——— Обязательная подписка ———
-CHANNEL_USERNAME = metaswarm_01
+CHANNEL_LINK     = "https://t.me/metaswarm_01"  # ссылка на ваш канал
+CHANNEL_USERNAME = "metaswarm_01"               # username канала без @
+
 
 def _keep_upload_action(bot, chat_id, stop_event):
     """
