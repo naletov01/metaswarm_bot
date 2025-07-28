@@ -217,8 +217,12 @@ def generate_and_send_video(user_id):
 
 # ——— Хендлеры ———
 def start(update: Update, context: CallbackContext):
-    keyboard = [["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"], ["🎞 Видео (Kling Master)", "🎞 Видео (Veo)"]]
-    markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+    keyboard = [
+       ["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"],
+       ["🎞 Видео (Kling Master)",  "🎞 Видео (Veo)"],
+       ["🔄 Сменить модель"]  # новая кнопка
+    ]
+    markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
     update.message.reply_text("Выберите модель генерации видео:", reply_markup=markup)
 
 def image_upload_handler(update: Update, context: CallbackContext):
@@ -257,6 +261,10 @@ def image_upload_handler(update: Update, context: CallbackContext):
 def text_handler(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     text = update.message.text.strip()
+    
+    if text == "🔄 Сменить модель":
+        return start(update, context)
+        
     now = time.time()
     data = user_data.setdefault(user_id, {})
     limits = user_limits.setdefault(user_id, {"videos": 0})
