@@ -18,6 +18,9 @@ import replicate
 import tempfile
 import requests
 import httpx
+import threading
+from telegram import ChatAction
+
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +49,16 @@ POSITIVE_PROMPT = (
     "depth of field, detailed eyes, perfect eyes, realistic eyes"
 )
 
+def _keep_upload_action(bot, chat_id, stop_event):
+    """
+    Каждые 15 секунд шлёт Telegram-у статус UPLOAD_VIDEO,
+    пока stop_event не станет установлен.
+    """
+    while not stop_event.is_set():
+        bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+        stop_event.wait(15)
+
+
 if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
     logger.error("Missing required environment variables")
     raise RuntimeError("Missing API keys or webhook secret")
@@ -68,6 +81,14 @@ def generate_and_send_video(user_id):
     image_url = data.get("last_image")
     prompt    = data.get("prompt")
     model     = data.get("model", "kling-pro")
+
+    # запускаем фоновой поток, который шлёт «upload_video» раз в 15 сек
+    stop_event = threading.Event()
+    threading.Thread(
+        target=_keep_upload_action,
+        args=(bot, user_id, stop_event),
+        daemon=True
+    ).start()
 
     try:
         logger.info(f"Start video generation: model={model}, prompt={prompt}")
@@ -133,6 +154,8 @@ def generate_and_send_video(user_id):
             raise ValueError("Unknown model selected")
 
         video_url = output.url
+        # 3) останавливаем поток с индикатором
+        stop_event.set()
         logger.info(f"[{user_id}] ✅ Видео готово: {video_url}")
         
         # 🔍 HEAD-запрос к файлу (проверка доступности)
@@ -147,7 +170,7 @@ def generate_and_send_video(user_id):
             bot.send_message(chat_id=user_id, text="⚠️ Не удалось проверить видео. Вот ссылка:\n" + video_url)
             return
         
-                 # ✅ Твое видео готово!
+        # ✅ Твое видео готово!
         bot.send_message(
             chat_id=user_id,
             text="✅ Твое видео готово!"
@@ -249,7 +272,7 @@ def image_upload_handler(update: Update, context: CallbackContext):
         if update.message.caption:
             prompt = update.message.caption.strip()
             data["prompt"] = prompt
-            update.message.reply_text("⏳ Генерирую видео по изображению и промпту…")
+            update.message.reply_text("⏳ Генерирую видео по изображению и промпту… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
             executor.submit(generate_and_send_video, user_id)
         else:
             update.message.reply_text("Изображение получено. Теперь введите промпт для генерации видео.")
@@ -292,7 +315,7 @@ def text_handler(update: Update, context: CallbackContext):
     if data.get("last_image") and data.get("model"):
         data["prompt"] = text
         data["last_action"] = now
-        update.message.reply_text("⏳ Видео генерируется…")
+        update.message.reply_text("⏳ Видео генерируется… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
         executor.submit(generate_and_send_video, user_id)
     else:
         update.message.reply_text("Пожалуйста, сначала выберите модель и загрузите изображение.")
