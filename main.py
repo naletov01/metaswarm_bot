@@ -24,7 +24,6 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackQueryHandler
 
 
-
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -405,6 +404,7 @@ def text_handler(update: Update, context: CallbackContext):
         update.message.reply_text("Пожалуйста, сначала выберите модель и загрузите изображение.")
 
 # ——— Регистрация хендлеров ———
+dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
 dp.add_handler(CommandHandler("start", start))
 dp.add_handler(MessageHandler(Filters.photo | (Filters.document & Filters.document.mime_type("image/")), image_upload_handler))
 dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
