@@ -287,13 +287,29 @@ def start(update: Update, context: CallbackContext):
 def on_check_sub(update: Update, context: CallbackContext):
     q = update.callback_query
     uid = q.from_user.id
+
     if check_subscription(uid):
         q.answer("Спасибо, подписка подтверждена!")
         q.message.delete()
-        return start(update, context)
+
+        # сразу шлём меню выбора модели
+        keyboard = [
+            ["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"],
+            ["🎞 Видео (Kling Master)",  "🎞 Видео (Veo)"],
+            ["🔄 Сменить модель"]
+        ]
+        markup = ReplyKeyboardMarkup(
+            keyboard,
+            one_time_keyboard=True,
+            resize_keyboard=True
+        )
+        context.bot.send_message(
+            chat_id=uid,
+            text="Выберите модель генерации видео:",
+            reply_markup=markup
+        )
     else:
         q.answer("Я всё ещё не вижу вашу подписку.")
-dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
 
 
 def image_upload_handler(update: Update, context: CallbackContext):
