@@ -286,13 +286,14 @@ def start(update: Update, context: CallbackContext):
 
 def on_check_sub(update: Update, context: CallbackContext):
     q = update.callback_query
-    uid = q.from_user.id
+    chat_id = q.message.chat.id 
+    user_id = q.from_user.id
 
-    if check_subscription(uid):
+    if check_subscription(user_id):
         q.answer("Спасибо, подписка подтверждена!")
         q.message.delete()
 
-        # сразу шлём меню выбора модели
+        # сразу шлём меню выбора модели в тот же чат
         keyboard = [
             ["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"],
             ["🎞 Видео (Kling Master)",  "🎞 Видео (Veo)"],
@@ -304,11 +305,12 @@ def on_check_sub(update: Update, context: CallbackContext):
             resize_keyboard=True
         )
         context.bot.send_message(
-            chat_id=uid,
+            chat_id=chat_id,
             text="Выберите модель генерации видео:",
             reply_markup=markup
         )
     else:
+        # если всё ещё не подписан, просто подтверждаем callback без удаления
         q.answer("Я всё ещё не вижу вашу подписку.")
 
 
