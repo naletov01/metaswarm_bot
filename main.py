@@ -29,6 +29,16 @@ WEBHOOK_SECRET      = os.getenv("WEBHOOK_SECRET")
 WEBHOOK_PATH        = f"/webhook/{WEBHOOK_SECRET}"
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 
+# ——— Negative Prompt ———
+NEGATIVE_PROMPT = (
+    "bad eyes, bad hands, missing fingers, extra fingers, ugly, bad anatomy, blurry, "
+    "bad quality, worst quality, worst detail, sketch, watermark, signature, artist name, "
+    "extra limbs, lowres, disfigured face, malformed, deformities, fused limbs, disconnected limbs, "
+    "duplicate limbs, mutated hands, mutated limbs, unnatural pose, asymmetrical eyes, asymmetry, "
+    "physical-defects, unhealthy-deformed-joints, unhealthy-hands, unhealthy-feet, "
+    "jpeg artifacts, cropped, duplicate"
+)
+
 if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
     logger.error("Missing required environment variables")
     raise RuntimeError("Missing API keys or webhook secret")
@@ -79,7 +89,7 @@ def generate_and_send_video(user_id):
                     "prompt": prompt,
                     "duration": 5,
                     "start_image": image_input,
-                    "negative_prompt": ""
+                    "negative_prompt": NEGATIVE_PROMPT
                 }
             )
         elif model == "kling-pro":
@@ -91,7 +101,7 @@ def generate_and_send_video(user_id):
                     "prompt": prompt,
                     "duration": 5,
                     "start_image": image_input,
-                    "negative_prompt": ""
+                    "negative_prompt": NEGATIVE_PROMPT
                 }
             )
         elif model == "kling-master":
@@ -101,9 +111,9 @@ def generate_and_send_video(user_id):
                 input={
                     "prompt": prompt,
                     "duration": 5,
-                    "aspect_ratio": "16:9",
+                    "aspect_ratio": "9:16",
                     "start_image": image_input,
-                    "negative_prompt": ""
+                    "negative_prompt": NEGATIVE_PROMPT
                 }
             )
         elif model == "veo":
