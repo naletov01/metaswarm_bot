@@ -147,19 +147,46 @@ def generate_and_send_video(user_id):
             bot.send_message(chat_id=user_id, text="⚠️ Не удалось проверить видео. Вот ссылка:\n" + video_url)
             return
         
-         # ✅ Отправка ролика как документ (скачаем и перешлём сами)
+                 # ✅ Твое видео готово!
+        bot.send_message(
+            chat_id=user_id,
+            text="✅ Твое видео готово!"
+        )
+
+        # ✅ Отправка ролика как документ (скачаем и перешлём сами)
         try:
-            # скачиваем видео из replicate в tmp‑файл
+            # 1) скачиваем видео из replicate в tmp‑файл
             resp = requests.get(video_url, stream=True)
             resp.raise_for_status()
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_vid:
                 for chunk in resp.iter_content(chunk_size=8192):
                     tmp_vid.write(chunk)
                 tmp_path = tmp_vid.name
-        
-            # отправляем как документ
+
+            # 2) отправляем как документ
             with open(tmp_path, "rb") as f:
-                bot.send_document(chat_id=user_id, document=f, filename="video.mp4")
+                bot.send_document(
+                    chat_id=user_id,
+                    document=f,
+                    filename="video.mp4"
+                )
+
+            # 3) спрашиваем, делать ли ещё одно, и показываем клавиатуру
+            keyboard = [
+                ["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"],
+                ["🎞 Видео (Kling Master)",  "🎞 Видео (Veo)"]
+            ]
+            markup = ReplyKeyboardMarkup(
+                keyboard,
+                one_time_keyboard=True,
+                resize_keyboard=True
+            )
+            bot.send_message(
+                chat_id=user_id,
+                text="Сделаем ещё видео? 🥹",
+                reply_markup=markup
+            )
+
         except Exception as e:
             logger.error(f"[{user_id}] ❌ Ошибка отправки документа: {e}")
             bot.send_message(
