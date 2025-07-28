@@ -308,7 +308,8 @@ def text_handler(update: Update, context: CallbackContext):
     }
     if text in model_map:
         data["model"] = model_map[text]
-        update.message.reply_text("Выбран режим. Теперь загрузите изображение и/или введите промпт.")
+        update.message.reply_text("Выбран режим. Теперь загрузите изображение и/или введите промпт. \n\n
+        ⚠️Важно!\n\n Чем качественнее изображение и точнее промпт(инструкция для видео), тем лучше генерация!")
         return
 
     # Обработка промпта
