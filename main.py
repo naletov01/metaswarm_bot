@@ -286,14 +286,20 @@ def start(update: Update, context: CallbackContext):
 
 def on_check_sub(update: Update, context: CallbackContext):
     q = update.callback_query
-    chat_id = q.message.chat.id 
+    # сразу отвечаем на callback, чтобы убрать спиннер
+    q.answer()
+
     user_id = q.from_user.id
+    chat_id = q.message.chat.id
 
     if check_subscription(user_id):
-        q.answer("Спасибо, подписка подтверждена!")
-        q.message.delete()
+        # удаляем старое сообщение-приглашение (молча, без падений)
+        try:
+            q.message.delete()
+        except:
+            pass
 
-        # сразу шлём меню выбора модели в тот же чат
+        # шлём меню выбора модели
         keyboard = [
             ["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"],
             ["🎞 Видео (Kling Master)",  "🎞 Видео (Veo)"],
@@ -310,8 +316,8 @@ def on_check_sub(update: Update, context: CallbackContext):
             reply_markup=markup
         )
     else:
-        # если всё ещё не подписан, просто подтверждаем callback без удаления
-        q.answer("Я всё ещё не вижу вашу подписку.")
+        # если всё ещё не подписан — показываем alert
+        q.answer("Я всё ещё не вижу вашу подписку.", show_alert=True)
 
 
 def image_upload_handler(update: Update, context: CallbackContext):
