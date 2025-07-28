@@ -20,6 +20,9 @@ import requests
 import httpx
 import threading
 from telegram import ChatAction
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import CallbackQueryHandler
+
 
 
 # ——— Настройка логирования ———
@@ -49,6 +52,9 @@ POSITIVE_PROMPT = (
     "depth of field, detailed eyes, perfect eyes, realistic eyes"
 )
 
+# ——— Обязательная подписка ———
+CHANNEL_USERNAME = metaswarm_01
+
 def _keep_upload_action(bot, chat_id, stop_event):
     """
     Каждые 15 секунд шлёт Telegram-у статус UPLOAD_VIDEO,
@@ -57,6 +63,28 @@ def _keep_upload_action(bot, chat_id, stop_event):
     while not stop_event.is_set():
         bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
         stop_event.wait(15)
+
+
+def check_subscription(user_id: int) -> bool:
+    try:
+        status = bot.get_chat_member(
+            chat_id=f"@{CHANNEL_USERNAME}", user_id=user_id
+        ).status
+        return status in ("member", "creator", "administrator")
+    except:
+        return False
+
+def send_subscribe_prompt(chat_id: int):
+    kb = [
+        [InlineKeyboardButton("✅ Подписаться", url=CHANNEL_LINK)],
+        [InlineKeyboardButton("🔄 Я подписался", callback_data="check_sub")]
+    ]
+    bot.send_message(
+        chat_id=chat_id,
+        text="🔒 Подпишитесь на канал, чтобы пользоваться ботом:",
+        reply_markup=InlineKeyboardMarkup(kb)
+    )
+
 
 
 if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
@@ -240,6 +268,10 @@ def generate_and_send_video(user_id):
 
 # ——— Хендлеры ———
 def start(update: Update, context: CallbackContext):
+    uid = update.effective_user.id
+    if not check_subscription(uid):
+        return send_subscribe_prompt(uid)
+
     keyboard = [
        ["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"],
        ["🎞 Видео (Kling Master)",  "🎞 Видео (Veo)"],
@@ -248,7 +280,24 @@ def start(update: Update, context: CallbackContext):
     markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
     update.message.reply_text("Выберите модель генерации видео:", reply_markup=markup)
 
+
+def on_check_sub(update: Update, context: CallbackContext):
+    q = update.callback_query
+    uid = q.from_user.id
+    if check_subscription(uid):
+        q.answer("Спасибо, подписка подтверждена!")
+        q.message.delete()
+        return start(update, context)
+    else:
+        q.answer("Я всё ещё не вижу вашу подписку.")
+dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
+
+
 def image_upload_handler(update: Update, context: CallbackContext):
+    uid = update.effective_user.id
+    if not check_subscription(uid):
+        return send_subscribe_prompt(uid)
+
     user_id = update.effective_user.id
 
     if update.message.photo:
@@ -282,6 +331,10 @@ def image_upload_handler(update: Update, context: CallbackContext):
         
 
 def text_handler(update: Update, context: CallbackContext):
+    uid = update.effective_user.id
+    if not check_subscription(uid):
+        return send_subscribe_prompt(uid)
+
     user_id = update.effective_user.id
     text = update.message.text.strip()
     
