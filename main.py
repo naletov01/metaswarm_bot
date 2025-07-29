@@ -22,28 +22,48 @@ import threading
 from telegram import ChatAction
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackQueryHandler
-from telegram.utils.request import Request
+from telegram.utils.request import Request as TelegramRequest
 from collections import defaultdict
 
-
-request_kwargs = Request(con_pool_size=MAX_CONCURRENT + 5)
-bot = Bot(token=BOT_TOKEN, request=request_kwargs)
-
-# максимально допустимое число параллельных видео‑генераций
-MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT", "6"))
 
 # семафор, который будет блокировать вызовы сверх лимита
 generate_semaphore = threading.Semaphore(MAX_CONCURRENT)
 
+
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 # ——— Конфиг ———
 BOT_TOKEN           = os.getenv("BOT_TOKEN")
 WEBHOOK_SECRET      = os.getenv("WEBHOOK_SECRET")
 WEBHOOK_PATH        = f"/webhook/{WEBHOOK_SECRET}"
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+# максимально допустимое число параллельных видео‑генераций
+MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT", "6"))
+
+
+if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
+    logger.error("Missing required environment variables")
+    raise RuntimeError("Missing API keys or webhook secret")
+
+
+# создаём Bot с расширенным пулом соединений
+telegram_req = TelegramRequest(con_pool_size=MAX_CONCURRENT + 5)
+bot = Bot(token=BOT_TOKEN, request=telegram_req)
+
+app = FastAPI()
+dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
+replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
+executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT)
+
+# ——— In-memory хранилище ———
+user_data = {}  # user_id → {"last_image": ..., "last_action": ..., "prompt": ..., "model": ...}
+user_limits = defaultdict(int)  # user_id → {"videos": int}
+
+MIN_INTERVAL = 5  # сек между запросами
+
 
 # ——— Negative Prompt ———
 NEGATIVE_PROMPT = (
@@ -106,25 +126,6 @@ def send_subscribe_prompt(chat_id: int):
         reply_markup=InlineKeyboardMarkup(kb)
     )
 
-
-
-if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
-    logger.error("Missing required environment variables")
-    raise RuntimeError("Missing API keys or webhook secret")
-
-# создаём Bot с расширенным пулом соединений
-request = Request(con_pool_size=MAX_CONCURRENT + 5)
-bot = Bot(token=BOT_TOKEN, request=request)
-app = FastAPI()
-dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
-replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
-executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT)
-
-# ——— In-memory хранилище ———
-user_data = {}  # user_id → {"last_image": ..., "last_action": ..., "prompt": ..., "model": ...}
-user_limits = defaultdict(int)  # user_id → {"videos": int}
-
-MIN_INTERVAL = 5  # сек между запросами
 
 # ——— Фоновая генерация видео ———
 def generate_and_send_video(user_id):
