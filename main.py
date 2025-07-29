@@ -30,6 +30,7 @@ from collections import defaultdict
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+user_limits = defaultdict(int)
 
 # ——— Конфиг ———
 BOT_TOKEN           = os.getenv("BOT_TOKEN")
@@ -50,7 +51,7 @@ if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
 
 
 # создаём Bot с расширенным пулом соединений
-telegram_req = TelegramRequest(con_pool_size=MAX_CONCURRENT + 5)
+telegram_req = TelegramRequest(con_pool_size=(MAX_CONCURRENT * 2) + 10)
 bot = Bot(token=BOT_TOKEN, request=telegram_req)
 
 app = FastAPI()
@@ -399,7 +400,7 @@ def text_handler(update: Update, context: CallbackContext):
         
     now = time.time()
     data = user_data.setdefault(user_id, {})
-    limits = user_limits.setdefault(user_id, {"videos": 0})
+    limits = user_limits[user_id]
 
     # Защита от спама
     last = data.get("last_action", 0)
