@@ -26,6 +26,9 @@ from telegram.utils.request import Request
 from collections import defaultdict
 
 
+request_kwargs = Request(con_pool_size=MAX_CONCURRENT + 5)
+bot = Bot(token=BOT_TOKEN, request=request_kwargs)
+
 # максимально допустимое число параллельных видео‑генераций
 MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT", "6"))
 
