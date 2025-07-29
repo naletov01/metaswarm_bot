@@ -24,6 +24,12 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackQueryHandler
 
 
+# максимально допустимое число параллельных видео‑генераций
+MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT", "5"))
+
+# семафор, который будет блокировать вызовы сверх лимита
+generate_semaphore = threading.Semaphore(MAX_CONCURRENT)
+
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -105,7 +111,7 @@ bot = Bot(token=BOT_TOKEN)
 app = FastAPI()
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
 replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
-executor = ThreadPoolExecutor(max_workers=2)
+executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT)
 
 # ——— In-memory хранилище ———
 user_data = {}  # user_id → {"last_image": ..., "last_action": ..., "prompt": ..., "model": ...}
@@ -276,6 +282,16 @@ def generate_and_send_video(user_id):
             os.remove(tmp_file.name)
 
 
+def queued_generate_and_send_video(user_id):
+    # дождаться свободного слота
+    generate_semaphore.acquire()
+    try:
+        generate_and_send_video(user_id)
+    finally:
+        # отпустить слот
+        generate_semaphore.release()
+
+
 # ——— Хендлеры ———
 def start(update: Update, context: CallbackContext):
     uid = update.effective_user.id
@@ -356,7 +372,7 @@ def image_upload_handler(update: Update, context: CallbackContext):
             prompt = update.message.caption.strip()
             data["prompt"] = prompt
             update.message.reply_text("⏳ Генерирую видео по изображению и промпту… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
-            executor.submit(generate_and_send_video, user_id)
+            executor.submit(queued_generate_and_send_video, user_id)
         else:
             update.message.reply_text("Изображение получено. Теперь введите промпт для генерации видео.")
     except Exception as e:
@@ -407,7 +423,7 @@ def text_handler(update: Update, context: CallbackContext):
         data["prompt"] = text
         data["last_action"] = now
         update.message.reply_text("⏳ Видео генерируется… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
-        executor.submit(generate_and_send_video, user_id)
+        executor.submit(queued_generate_and_send_video, user_id)
     else:
         update.message.reply_text("Пожалуйста, сначала выберите модель и загрузите изображение.")
 
