@@ -22,6 +22,8 @@ import threading
 from telegram import ChatAction
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackQueryHandler
+from telegram.utils.request import Request
+from collections import defaultdict
 
 
 # максимально допустимое число параллельных видео‑генераций
@@ -107,7 +109,9 @@ if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
     logger.error("Missing required environment variables")
     raise RuntimeError("Missing API keys or webhook secret")
 
-bot = Bot(token=BOT_TOKEN)
+# создаём Bot с расширенным пулом соединений
+request = Request(con_pool_size=MAX_CONCURRENT + 5)
+bot = Bot(token=BOT_TOKEN, request=request)
 app = FastAPI()
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
 replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
@@ -115,7 +119,7 @@ executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT)
 
 # ——— In-memory хранилище ———
 user_data = {}  # user_id → {"last_image": ..., "last_action": ..., "prompt": ..., "model": ...}
-user_limits = {}  # user_id → {"videos": int}
+user_limits = defaultdict(int)  # user_id → {"videos": int}
 
 MIN_INTERVAL = 5  # сек между запросами
 
@@ -264,10 +268,8 @@ def generate_and_send_video(user_id):
             if 'tmp_path' in locals() and os.path.exists(tmp_path):
                 os.remove(tmp_path)
 
-
-
         # ⏱ Обновляем лимиты
-        user_limits.setdefault(user_id, {})["videos"] = user_limits[user_id].get("videos", 0) + 1
+        user_limits[user_id] += 1
 
     except Exception:
         logger.exception("Video generation error")
