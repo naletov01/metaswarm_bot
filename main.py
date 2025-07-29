@@ -26,10 +26,6 @@ from telegram.utils.request import Request as TelegramRequest
 from collections import defaultdict
 
 
-# семафор, который будет блокировать вызовы сверх лимита
-generate_semaphore = threading.Semaphore(MAX_CONCURRENT)
-
-
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,8 +36,12 @@ BOT_TOKEN           = os.getenv("BOT_TOKEN")
 WEBHOOK_SECRET      = os.getenv("WEBHOOK_SECRET")
 WEBHOOK_PATH        = f"/webhook/{WEBHOOK_SECRET}"
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+
 # максимально допустимое число параллельных видео‑генераций
 MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT", "6"))
+
+# семафор, который будет блокировать вызовы сверх лимита
+generate_semaphore = threading.Semaphore(MAX_CONCURRENT)
 
 
 if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
