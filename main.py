@@ -269,17 +269,17 @@ def generate_and_send_video(user_id):
         # ⏱ Обновляем лимиты
         user_limits.setdefault(user_id, {})["videos"] = user_limits[user_id].get("videos", 0) + 1
 
-    except Exception as e:
-        logger.error(f"Video generation error: {e}")
+    except Exception:
+        logger.exception("Video generation error")
         bot.send_message(chat_id=user_id, text="❌ Ошибка генерации видео. Попробуйте позже.")
+
     finally:
         if tmp_file:
             try:
                 os.remove(tmp_file.name)
-            except Exception as e:
-                logger.warning(f"Не удалось удалить временный файл: {e}")
-        if tmp_file:
-            os.remove(tmp_file.name)
+            except OSError:
+                pass
+
 
 
 def queued_generate_and_send_video(user_id):
