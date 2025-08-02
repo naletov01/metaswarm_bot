@@ -246,6 +246,7 @@ def start(update: Update, context: CallbackContext):
 # /choose_model → Генерация
 def choose_model(update: Update, context: CallbackContext):
     uid = update.effective_user.id
+    chat_id = update.effective_chat.id
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
     text, markup = render_menu("menu:generation", uid)
@@ -254,6 +255,7 @@ def choose_model(update: Update, context: CallbackContext):
 # /profile → Профиль
 def profile(update: Update, context: CallbackContext):
     uid = update.effective_user.id
+    chat_id = update.effective_chat.id
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
     text, markup = render_menu("menu:profile", uid)
@@ -262,6 +264,7 @@ def profile(update: Update, context: CallbackContext):
 # /info → О моделях
 def info(update: Update, context: CallbackContext):
     uid = update.effective_user.id
+    chat_id = update.effective_chat.id
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
     text, markup = render_menu("menu:info", uid)
@@ -270,23 +273,30 @@ def info(update: Update, context: CallbackContext):
 # /partner → Партнёрка
 def partner(update: Update, context: CallbackContext):
     uid = update.effective_user.id
+    chat_id = update.effective_chat.id
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
     text, markup = render_menu("menu:partner", uid)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
-# 3) CallbackQuery для всех inline-меню
+
 def menu_callback(update: Update, context: CallbackContext):
-    q   = update.callback_query
-    uid = q.from_user.id
-    # блокируем навигацию, если отписался
-    if not check_subscription(uid):
-        return send_subscribe_prompt(q.message.chat.id)
+    q = update.callback_query
+    # 1) сразу отвечаем на callback, чтобы убрать спиннер
     q.answer()
-    # data = "menu:main", "menu:generation" и т.д.
-    menu_key = q.data
+
+    uid = q.from_user.id
+    chat_id = q.message.chat.id
+
+    # 2) блокируем навигацию, если отписался
+    if not check_subscription(uid):
+        return send_subscribe_prompt(chat_id)
+
+    # 3) показываем нужное меню
+    menu_key = q.data  # "menu:main", "menu:generation" и т.д.
     text, markup = render_menu(menu_key, uid)
     q.edit_message_text(text=text, reply_markup=markup, parse_mode="HTML")
+
 
 def on_check_sub(update: Update, context: CallbackContext):
     q = update.callback_query
