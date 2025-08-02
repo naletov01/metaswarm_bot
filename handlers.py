@@ -3,10 +3,9 @@ import time
 from threading import Thread, Event
 from telegram import ChatAction, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
-
+from telegram import Update
 import config
 from menu import render_menu, MENUS
-from config import replicate_client, executor
 
 
 def _keep_upload_action(bot, chat_id, stop_event):
@@ -221,17 +220,21 @@ def queued_generate_and_send_video(user_id):
 
 # ——— Хендлеры ———
 def start(update: Update, context: CallbackContext):
-    uid = update.effective_user.id
-    if not check_subscription(uid):
-        return send_subscribe_prompt(uid)
+    user_id = update.effective_user.id
 
-    keyboard = [
-       ["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"],
-       ["🎞 Видео (Kling Master)",  "🎞 Видео (Veo)"],
-       ["🔄 Сменить модель"]  # новая кнопка
-    ]
-    markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
-    update.message.reply_text("Выберите модель генерации видео:", reply_markup=markup)
+    # 1) проверяем подписку — если не подписан, выходим и показываем промпт
+    if not config.check_subscription(user_id):
+        return config.send_subscribe_prompt(user_id)
+
+    # 2) если подписан — рендерим главное меню через menu.render_menu
+    text, markup = render_menu(CB_MAIN, user_id)
+
+    # 3) шлём его как HTML (чтобы теги <b> работали)
+    update.message.reply_text(
+        text,
+        reply_markup=markup,
+        parse_mode="HTML"
+    )
 
 def menu_callback(update, context):
     key = update.callback_query.data  # например "menu:generation"
@@ -256,7 +259,7 @@ def on_check_sub(update: Update, context: CallbackContext):
         # шлём меню выбора модели
         keyboard = [
             ["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"],
-            ["🎞 Видео (Kling Master)",  "🎞 Видео (Veo)"],
+            ["🎞 Видео (Kling Master)",  "🎞 Видео (Veo3)"],
             ["🔄 Сменить модель"]
         ]
         markup = ReplyKeyboardMarkup(
@@ -338,7 +341,7 @@ def text_handler(update: Update, context: CallbackContext):
         "🎞 Видео (Kling Standard)": "kling-standard",
         "🎞 Видео (Kling Pro)": "kling-pro",
         "🎞 Видео (Kling Master)": "kling-master",
-        "🎞 Видео (Veo)": "veo",
+        "🎞 Видео (Veo3)": "veo",
     }
     if text in model_map:
         data["model"] = model_map[text]
