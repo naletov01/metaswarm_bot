@@ -2,8 +2,7 @@
 
 import logging
 from fastapi import FastAPI, Request, HTTPException
-from concurrent.futures import ThreadPoolExecutor
-import replicate
+from telegram import Update
 
 import config
 import handlers
@@ -13,20 +12,16 @@ from telegram.ext import (
     MessageHandler,
     Filters,
     CallbackContext,
+    CallbackQueryHandler
 )
-from telegram.ext import CallbackQueryHandler
 
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
-executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT)
-
 app = FastAPI()
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
-
 
 # ——— Регистрация хендлеров ———
 dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
