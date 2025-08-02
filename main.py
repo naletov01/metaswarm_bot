@@ -53,6 +53,15 @@ dp.add_handler(MessageHandler(Filters.photo | (Filters.document & Filters.docume
 dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
 
 
+if __name__ == "__main__":
+    from telegram.ext import Updater
+    updater = Updater(token=config.BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler("start", start))
+    updater.start_polling()
+    updater.idle()
+    
+
 # ——— Webhook endpoint ———
 @app.post(WEBHOOK_PATH)
 async def telegram_webhook(request: Request):
