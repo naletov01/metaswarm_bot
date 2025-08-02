@@ -9,7 +9,6 @@ from telegram import Update
 import config
 from menu import render_menu, MENUS
 from menu import render_menu, CB_MAIN
-from config import bot
 
 
 def _keep_upload_action(bot, chat_id, stop_event):
