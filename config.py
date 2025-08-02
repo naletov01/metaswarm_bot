@@ -51,6 +51,9 @@ POSITIVE_PROMPT = (
 # 5) Спиннер-интервал
 MIN_INTERVAL = 5  # сек между сообщениями UPLOAD_VIDEO
 
+replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
+executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT)
+
 
 if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
     logger.error("Missing required environment variables")
