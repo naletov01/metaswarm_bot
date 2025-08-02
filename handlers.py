@@ -24,7 +24,7 @@ def _keep_upload_action(bot, chat_id, stop_event):
 
 def check_subscription(user_id: int) -> bool:
     try:
-        status = bot.get_chat_member(
+        status = config.bot.get_chat_member(
             chat_id=f"@{CHANNEL_USERNAME}", user_id=user_id
         ).status
         return status in ("member", "creator", "administrator")
@@ -36,7 +36,7 @@ def send_subscribe_prompt(chat_id: int):
         [InlineKeyboardButton("✅ Подписаться", url=CHANNEL_LINK)],
         [InlineKeyboardButton("🔄 Я подписался", callback_data="check_sub")]
     ]
-    bot.send_message(
+    config.bot.send_message(
         chat_id=chat_id,
         text = (
             "👋 Привет!\n"
