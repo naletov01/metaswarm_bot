@@ -69,18 +69,6 @@ def root():
     return {"status": "Bot is running"}
 
 
-if __name__ == "__main__":
-    from telegram.ext import Updater
-    updater = Updater(token=config.BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
-    updater.start_polling()
-    updater.idle()
-
-
-
-
-
 
 
 
