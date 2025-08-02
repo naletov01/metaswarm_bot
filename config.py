@@ -2,11 +2,15 @@
 
 import os
 import threading
+import logging
 from collections import defaultdict
 from telegram import Bot
 from telegram.utils.request import Request as TelegramRequest
 import replicate
 from concurrent.futures import ThreadPoolExecutor
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 ADMIN_IDS = {487950979} 
 
