@@ -10,7 +10,6 @@ import config
 from menu import render_menu, MENUS
 from menu import render_menu, CB_MAIN
 from config import bot
-from handlers import check_subscription, send_subscribe_prompt
 
 
 def _keep_upload_action(bot, chat_id, stop_event):
