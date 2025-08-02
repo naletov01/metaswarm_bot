@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
 
-config.bot.set_my_commands([
+bot.set_my_commands([
     BotCommand("start",        "🏠 Главное меню"),
     BotCommand("choose_model", "🎞 Генерация видео"),
     BotCommand("profile",      "👤 Профиль"),
