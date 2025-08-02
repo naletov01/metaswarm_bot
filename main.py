@@ -14,6 +14,7 @@ from telegram.ext import (
     Filters,
     CallbackContext,
 )
+from telegram.ext import CallbackQueryHandler
 
 
 # ——— Настройка логирования ———
