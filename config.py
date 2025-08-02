@@ -3,6 +3,8 @@ import threading
 from collections import defaultdict
 from telegram import Bot
 from telegram.utils.request import Request as TelegramRequest
+import replicate
+from concurrent.futures import ThreadPoolExecutor
 
 # ——— Конфиг ———
 BOT_TOKEN           = os.getenv("BOT_TOKEN")
