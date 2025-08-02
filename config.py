@@ -6,6 +6,8 @@ from telegram.utils.request import Request as TelegramRequest
 import replicate
 from concurrent.futures import ThreadPoolExecutor
 
+ADMIN_IDS = {487950979} 
+
 # ——— Конфиг ———
 BOT_TOKEN           = os.getenv("BOT_TOKEN")
 WEBHOOK_SECRET      = os.getenv("WEBHOOK_SECRET")
