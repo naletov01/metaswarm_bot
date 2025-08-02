@@ -1,11 +1,14 @@
-import tempfile, requests, httpx
+# handlers.py
 import time
+import tempfile, requests, httpx
+import threading
 from threading import Thread, Event
 from telegram import ChatAction, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 from telegram import Update
 import config
 from menu import render_menu, MENUS
+from menu import render_menu, CB_MAIN
 
 
 def _keep_upload_action(bot, chat_id, stop_event):
@@ -207,7 +210,6 @@ def generate_and_send_video(user_id):
                 pass
 
 
-
 def queued_generate_and_send_video(user_id):
     # дождаться свободного слота
     generate_semaphore.acquire()
@@ -240,6 +242,41 @@ def menu_callback(update, context):
     key = update.callback_query.data  # например "menu:generation"
     text, kb = render_menu(key, update.effective_user.id)
     update.callback_query.edit_message_text(text, reply_markup=kb, parse_mode="HTML")
+
+# 2) Привязываем каждый «гл. пункт» к командам:
+# /choose_model → Генерация
+def choose_model(update: Update, context: CallbackContext):
+    uid = update.effective_user.id
+    text, markup = render_menu("menu:generation", uid)
+    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
+
+# /profile → Профиль
+def profile(update: Update, context: CallbackContext):
+    uid = update.effective_user.id
+    text, markup = render_menu("menu:profile", uid)
+    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
+
+# /info → О моделях
+def info(update: Update, context: CallbackContext):
+    uid = update.effective_user.id
+    text, markup = render_menu("menu:info", uid)
+    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
+
+# /partner → Партнёрка
+def partner(update: Update, context: CallbackContext):
+    uid = update.effective_user.id
+    text, markup = render_menu("menu:partner", uid)
+    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
+
+# 3) CallbackQuery для всех inline-меню
+def menu_callback(update: Update, context: CallbackContext):
+    q   = update.callback_query
+    uid = q.from_user.id
+    q.answer()
+    # data = "menu:main", "menu:generation" и т.д.
+    menu_key = q.data
+    text, markup = render_menu(menu_key, uid)
+    q.edit_message_text(text=text, reply_markup=markup, parse_mode="HTML")
 
 def on_check_sub(update: Update, context: CallbackContext):
     q = update.callback_query
