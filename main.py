@@ -15,6 +15,9 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 
+from handlers import start, menu_callback
+from menu import CB_MAIN
+
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
