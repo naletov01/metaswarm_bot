@@ -226,8 +226,8 @@ def start(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
 
     # 1) проверяем подписку — если не подписан, выходим и показываем промпт
-    if not check_subscription(user_id):
-        return send_subscribe_prompt(user_id)
+    if not check_subscription(bot, user_id):
+        return send_subscribe_prompt(bot, user_id)
 
     # 2) если подписан — рендерим главное меню через menu.render_menu
     text, markup = render_menu(CB_MAIN, user_id)
