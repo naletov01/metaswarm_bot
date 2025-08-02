@@ -40,18 +40,11 @@ MENUS = {
     CB_MAIN: {
         "text": "🏠 <b>Главное меню</b>\n\nВыберите раздел:",
         "buttons": [
-            [
-                InlineKeyboardButton("🎞 Генерация видео", callback_data=CB_GENERATION),
-            ],
-            [
-                InlineKeyboardButton("👤 Профиль",          callback_data=CB_PROFILE),
-            ],
-            [
-                InlineKeyboardButton("ℹ️ О моделях",        callback_data=CB_INFO),
-            ],
-            [
-                InlineKeyboardButton("🤑 Партнёрка",        callback_data=CB_PARTNER),
-            ],
+            [InlineKeyboardButton("🎞 Генерация видео", callback_data=CB_GENERATION),],
+            [InlineKeyboardButton("🔥 Купить подписку",    callback_data=CB_SUB_PREMIUM),],
+            [InlineKeyboardButton("👤 Профиль",          callback_data=CB_PROFILE),],
+            [InlineKeyboardButton("ℹ️ О моделях",        callback_data=CB_INFO),],
+            [InlineKeyboardButton("🤑 Партнёрка",        callback_data=CB_PARTNER),],
         ],
     },
 
