@@ -246,24 +246,32 @@ def start(update: Update, context: CallbackContext):
 # /choose_model → Генерация
 def choose_model(update: Update, context: CallbackContext):
     uid = update.effective_user.id
+    if not check_subscription(user_id):
+        return send_subscribe_prompt(chat_id)
     text, markup = render_menu("menu:generation", uid)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
 # /profile → Профиль
 def profile(update: Update, context: CallbackContext):
     uid = update.effective_user.id
+    if not check_subscription(user_id):
+        return send_subscribe_prompt(chat_id)
     text, markup = render_menu("menu:profile", uid)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
 # /info → О моделях
 def info(update: Update, context: CallbackContext):
     uid = update.effective_user.id
+    if not check_subscription(user_id):
+        return send_subscribe_prompt(chat_id)
     text, markup = render_menu("menu:info", uid)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
 # /partner → Партнёрка
 def partner(update: Update, context: CallbackContext):
     uid = update.effective_user.id
+    if not check_subscription(user_id):
+        return send_subscribe_prompt(chat_id)
     text, markup = render_menu("menu:partner", uid)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
@@ -271,6 +279,9 @@ def partner(update: Update, context: CallbackContext):
 def menu_callback(update: Update, context: CallbackContext):
     q   = update.callback_query
     uid = q.from_user.id
+    # блокируем навигацию, если отписался
+    if not check_subscription(uid):
+        return send_subscribe_prompt(q.message.chat.id)
     q.answer()
     # data = "menu:main", "menu:generation" и т.д.
     menu_key = q.data
