@@ -24,10 +24,12 @@ app = FastAPI()
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
 
 # ——— Регистрация хендлеров ———
+dp.add_handler(CallbackQueryHandler(menu_callback, pattern="^menu:"))
 dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
 dp.add_handler(CommandHandler("start", start))
 dp.add_handler(MessageHandler(Filters.photo | (Filters.document & Filters.document.mime_type("image/")), image_upload_handler))
 dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
+
 
 # ——— Webhook endpoint ———
 @app.post(WEBHOOK_PATH)
