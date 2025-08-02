@@ -2,6 +2,7 @@
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import config
+from config import ADMIN_IDS
 
 # ——— CALLBACK_DATA КОНСТАНТЫ ———
 CB_MAIN            = "menu:main"
@@ -211,7 +212,7 @@ def render_menu(menu_key: str, user_id: int) -> (str, InlineKeyboardMarkup):
     если у пользователя нет премиум-подписки.
     """
     m = MENUS[menu_key]
-    has_premium = config.user_limits.get(user_id, 0) > 0  # <- пример проверки
+    has_premium = (user_id in ADMIN_IDS) or (config.user_limits.get(user_id, 0) > 0)  # <- пример проверки
     buttons = []
 
     # если это меню Генерации — ставим замок
