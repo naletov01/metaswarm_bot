@@ -313,21 +313,13 @@ def on_check_sub(update: Update, context: CallbackContext):
         except:
             pass
 
-        # шлём меню выбора модели
-        keyboard = [
-            ["🎞 Видео (Kling Standard)", "🎞 Видео (Kling Pro)"],
-            ["🎞 Видео (Kling Master)",  "🎞 Видео (Veo3)"],
-            ["🔄 Сменить модель"]
-        ]
-        markup = ReplyKeyboardMarkup(
-            keyboard,
-            one_time_keyboard=True,
-            resize_keyboard=True
-        )
+        # 3) отправляем главное меню inline-кнопками
+        text, markup = render_menu(CB_MAIN, uid)
         context.bot.send_message(
             chat_id=chat_id,
-            text="Выберите модель генерации видео:",
-            reply_markup=markup
+            text=text,
+            reply_markup=markup,
+            parse_mode="HTML"
         )
     else:
         # если всё ещё не подписан — показываем alert
