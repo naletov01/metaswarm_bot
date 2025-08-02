@@ -51,15 +51,6 @@ dp.add_handler(CallbackQueryHandler(menu_callback, pattern="^menu:"))
 dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
 dp.add_handler(MessageHandler(Filters.photo | (Filters.document & Filters.document.mime_type("image/")), image_upload_handler))
 dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
-
-
-if __name__ == "__main__":
-    from telegram.ext import Updater
-    updater = Updater(token=config.BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
-    updater.start_polling()
-    updater.idle()
     
 
 # ——— Webhook endpoint ———
@@ -76,6 +67,15 @@ async def telegram_webhook(request: Request):
 @app.get("/")
 def root():
     return {"status": "Bot is running"}
+
+
+if __name__ == "__main__":
+    from telegram.ext import Updater
+    updater = Updater(token=config.BOT_TOKEN, use_context=True)
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler("start", start))
+    updater.start_polling()
+    updater.idle()
 
 
 
