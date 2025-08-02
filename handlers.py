@@ -6,7 +6,7 @@ from telegram.ext import CallbackContext
 
 import config
 from menu import render_menu, MENUS
-from main import replicate_client, executor
+from config import replicate_client, executor
 
 
 def _keep_upload_action(bot, chat_id, stop_event):
@@ -233,6 +233,10 @@ def start(update: Update, context: CallbackContext):
     markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=False, resize_keyboard=True)
     update.message.reply_text("Выберите модель генерации видео:", reply_markup=markup)
 
+def menu_callback(update, context):
+    key = update.callback_query.data  # например "menu:generation"
+    text, kb = render_menu(key, update.effective_user.id)
+    update.callback_query.edit_message_text(text, reply_markup=kb, parse_mode="HTML")
 
 def on_check_sub(update: Update, context: CallbackContext):
     q = update.callback_query
