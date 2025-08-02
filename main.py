@@ -15,9 +15,13 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 
-from handlers import start, menu_callback
 from menu import CB_MAIN
+from config import bot, WEBHOOK_PATH
+from handlers import start, image_upload_handler, text_handler, menu_callback, on_check_sub
 
+# подтягиваем Bot и путь вебхука из config
+bot = config.bot
+WEBHOOK_PATH = config.WEBHOOK_PATH
 
 # ——— Настройка логирования ———
 logging.basicConfig(level=logging.INFO)
