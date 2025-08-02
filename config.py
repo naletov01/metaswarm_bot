@@ -1,25 +1,35 @@
 import os
+import threading
 from collections import defaultdict
+from telegram import Bot
 from telegram.utils.request import Request as TelegramRequest
 
-# 1) Токены и ссылки
+# ——— Конфиг ———
 BOT_TOKEN           = os.getenv("BOT_TOKEN")
 WEBHOOK_SECRET      = os.getenv("WEBHOOK_SECRET")
 WEBHOOK_PATH        = f"/webhook/{WEBHOOK_SECRET}"
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 
-CHANNEL_LINK     = "https://t.me/metaswarm_01"
-CHANNEL_USERNAME = "metaswarm_01"
+# ——— Обязательная подписка ———
+CHANNEL_LINK     = "https://t.me/metaswarm_01"  
+CHANNEL_USERNAME = "metaswarm_01"               
 
 # 2) Пулы и семафор
+# максимально допустимое число параллельных видео‑генераций
 MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT", "6"))
-REQUEST_KWARGS = TelegramRequest(con_pool_size=(MAX_CONCURRENT * 2) + 10)
 
-# 3) Внутреннее хранилище
-user_data   = {}               # {user_id: {...}}
-user_limits = defaultdict(int) # {user_id: int}
+# семафор, который будет блокировать вызовы сверх лимита
+generate_semaphore = threading.Semaphore(MAX_CONCURRENT)
 
-# 4) Промпты
+# создаём Bot с расширенным пулом соединений
+telegram_req = TelegramRequest(con_pool_size=(MAX_CONCURRENT * 2) + 10)
+bot = Bot(token=BOT_TOKEN, request=telegram_req)
+
+# ——— In-memory хранилище ———
+user_data = {}  # user_id → {"last_image": ..., "last_action": ..., "prompt": ..., "model": ...}
+user_limits = defaultdict(int)  # user_id → {"videos": int}
+
+# ——— Negative Prompt ———
 NEGATIVE_PROMPT = (
     "bad eyes, bad hands, missing fingers, extra fingers, ugly, bad anatomy, blurry, "
     "bad quality, worst quality, worst detail, sketch, watermark, signature, artist name, "
@@ -28,6 +38,8 @@ NEGATIVE_PROMPT = (
     "physical-defects, unhealthy-deformed-joints, unhealthy-hands, unhealthy-feet, "
     "jpeg artifacts, cropped, duplicate"
 )
+
+# ——— Positive Prompt ———
 POSITIVE_PROMPT = (
     "masterpiece, best quality, high resolution, cinematic lighting, detailed, "
     "perfect composition, ultra realistic, 4k, colorful, sharp focus, "
@@ -37,3 +49,7 @@ POSITIVE_PROMPT = (
 # 5) Спиннер-интервал
 MIN_INTERVAL = 5  # сек между сообщениями UPLOAD_VIDEO
 
+
+if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
+    logger.error("Missing required environment variables")
+    raise RuntimeError("Missing API keys or webhook secret")
