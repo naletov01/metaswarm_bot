@@ -10,6 +10,8 @@ from telegram import Update
 import config
 from menu import render_menu, MENUS
 from menu import render_menu, CB_MAIN
+from config import CHANNEL_LINK, CHANNEL_USERNAME, user_data, user_limits
+
 
 
 def _keep_upload_action(bot, chat_id, stop_event):
@@ -228,7 +230,7 @@ def start(update: Update, context: CallbackContext):
 
     # 1) проверяем подписку — если не подписан, выходим и показываем промпт
     if not check_subscription(user_id):
-        return send_subscribe_prompt(user_id)
+        return send_subscribe_prompt(chat_id)
 
     # 2) если подписан — рендерим главное меню через menu.render_menu
     text, markup = render_menu(CB_MAIN, user_id)
@@ -239,11 +241,6 @@ def start(update: Update, context: CallbackContext):
         reply_markup=markup,
         parse_mode="HTML"
     )
-
-def menu_callback(update, context):
-    key = update.callback_query.data  # например "menu:generation"
-    text, kb = render_menu(key, update.effective_user.id)
-    update.callback_query.edit_message_text(text, reply_markup=kb, parse_mode="HTML")
 
 # 2) Привязываем каждый «гл. пункт» к командам:
 # /choose_model → Генерация
