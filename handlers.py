@@ -9,7 +9,7 @@ from telegram.ext import CallbackContext
 from telegram import Update
 import config
 from menu import render_menu, MENUS
-from menu import render_menu, CB_MAIN
+from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_INFO, CB_PARTNER 
 from config import CHANNEL_LINK, CHANNEL_USERNAME, user_data, user_limits
 
 
@@ -245,38 +245,38 @@ def start(update: Update, context: CallbackContext):
 # 2) Привязываем каждый «гл. пункт» к командам:
 # /choose_model → Генерация
 def choose_model(update: Update, context: CallbackContext):
-    uid = update.effective_user.id
+    user_id = update.effective_user.id
     chat_id = update.effective_chat.id
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
-    text, markup = render_menu("menu:generation", uid)
+    text, markup = render_menu(CB_GENERATION, user_id)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
 # /profile → Профиль
 def profile(update: Update, context: CallbackContext):
-    uid = update.effective_user.id
+    user_id = update.effective_user.id
     chat_id = update.effective_chat.id
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
-    text, markup = render_menu("menu:profile", uid)
+    text, markup = render_menu(CB_PROFILE, user_id)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
 # /info → О моделях
 def info(update: Update, context: CallbackContext):
-    uid = update.effective_user.id
+    user_id = update.effective_user.id
     chat_id = update.effective_chat.id
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
-    text, markup = render_menu("menu:info", uid)
+    text, markup = render_menu(CB_INFO, user_id)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
 # /partner → Партнёрка
 def partner(update: Update, context: CallbackContext):
-    uid = update.effective_user.id
+    user_id = update.effective_user.id
     chat_id = update.effective_chat.id
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
-    text, markup = render_menu("menu:partner", uid)
+    text, markup = render_menu(CB_PARTNER, user_id)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
 
