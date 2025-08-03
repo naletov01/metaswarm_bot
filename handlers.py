@@ -1,5 +1,9 @@
 # handlers.py
 
+import logging
+import replicate
+from config import MIN_INTERVAL, executor, logger
+
 import time
 import tempfile, requests, httpx
 import threading
