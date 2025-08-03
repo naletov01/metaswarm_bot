@@ -29,6 +29,13 @@ CB_GEN_KLING_PRO   = "gen:kling_pro"
 CB_GEN_KLING_MAST  = "gen:kling_master"
 CB_GEN_VEO         = "gen:veo"
 
+MODEL_MAP = {
+    CB_GEN_KLING_STD:  "kling-standard",
+    CB_GEN_KLING_PRO:  "kling-pro",
+    CB_GEN_KLING_MAST: "kling-master",
+    CB_GEN_VEO:        "veo",
+}
+
 # ——— ВСПОМОГАТЕЛЬ —————
 def _maybe_lock(text: str, has_premium: bool) -> str:
     """Если нет премиум-подписки — добавляем эмоджи замка спереди."""
