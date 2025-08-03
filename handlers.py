@@ -327,9 +327,19 @@ def menu_callback(update: Update, context: CallbackContext):
     if not check_subscription(uid):
         return send_subscribe_prompt(chat_id)
         
-    menu_key = q.data
-    text, markup = render_menu(menu_key, uid)
-    q.edit_message_text(text=text, reply_markup=markup, parse_mode="HTML")
+    try:
+        q.message.delete()
+    except:
+        pass
+
+    # отрисовываем новое
+    text, markup = render_menu(q.data, uid)
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=text,
+        reply_markup=markup,
+        parse_mode="HTML"
+    )
 
 
 def on_check_sub(update: Update, context: CallbackContext):
