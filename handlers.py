@@ -1,8 +1,8 @@
 # handlers.py
 
+import config
 import logging
 import replicate
-from config import MIN_INTERVAL, executor, logger
 
 import time
 import tempfile, requests, httpx
@@ -11,12 +11,21 @@ from threading import Thread, Event
 from telegram import ChatAction, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 from telegram import Update
-import config
+
 from menu import render_menu, MENUS
 from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_INFO, CB_PARTNER 
 from menu import CB_GEN_KLING_STD, CB_GEN_KLING_PRO, CB_GEN_KLING_MAST, CB_GEN_VEO
 from config import CHANNEL_LINK, CHANNEL_USERNAME, user_data, user_limits
 from menu import MODEL_MAP
+from config import (
+    bot,                    # Telegram Bot
+    executor,               # ThreadPoolExecutor
+    generate_semaphore,     # Semaphore для очереди
+    MIN_INTERVAL,           # Интервал анти-спама
+    POSITIVE_PROMPT,        # Константа для prompt-а
+    NEGATIVE_PROMPT,        # Константа для negative_prompt
+    logger                  # Логгер (или создайте свой через logging.getLogger)
+)
 
 
 
