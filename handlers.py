@@ -318,7 +318,7 @@ def menu_callback(update: Update, context: CallbackContext):
                 chat_id=chat_id,
                 text=(
                     f"✅ Режим «{model}» выбран.\n"
-                    "Сначала загрузите изображение, затем введите промпт для видео."
+                    "Загрузите изображение, затем введите промпт для видео."
                 )
             )
         return
