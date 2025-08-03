@@ -382,7 +382,6 @@ def image_upload_handler(update: Update, context: CallbackContext):
         data = user_data.setdefault(user_id, {})
         data["last_image"] = file_url
         data["last_image_id"] = file_id
-        data["mode"] = "video"  # поскольку в новом флоу только видео
 
         # 📌 если пользователь сразу указал подпись
         if update.message.caption:
@@ -420,10 +419,11 @@ def text_handler(update: Update, context: CallbackContext):
         return
 
     # Обработка промпта
-    if data.get("last_image") and data.get("model"):
+    if data.get("last_image"):
+        data["model"] = data.get("model", "kling-pro")
         data["prompt"] = text
         data["last_action"] = now
         update.message.reply_text("⏳ Видео генерируется… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
         executor.submit(queued_generate_and_send_video, user_id)
     else:
-        update.message.reply_text("Пожалуйста, сначала выберите модель и загрузите изображение.")
+        update.message.reply_text("Пожалуйста, сначала загрузите изображение.")
