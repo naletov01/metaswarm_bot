@@ -8,9 +8,13 @@ import time
 import tempfile, requests, httpx, os 
 import threading
 from threading import Thread, Event
-from telegram import ChatAction, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import (
+    ChatAction, 
+    InlineKeyboardButton, 
+    InlineKeyboardMarkup, 
+    ReplyKeyboardRemove,
+    Update)
 from telegram.ext import CallbackContext
-from telegram import Update
 
 from menu import render_menu, MENUS
 from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_INFO, CB_PARTNER 
@@ -244,6 +248,11 @@ def start(update: Update, context: CallbackContext):
     # 1) проверяем подписку — если не подписан, выходим и показываем промпт
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
+
+    update.message.reply_text(
+        text="Меню обновлено",
+        reply_markup=ReplyKeyboardRemove()
+    )
 
     # 2) если подписан — рендерим главное меню через menu.render_menu
     text, markup = render_menu(CB_MAIN, user_id)
