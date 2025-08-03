@@ -26,7 +26,7 @@ CHANNEL_USERNAME = "metaswarm_01"
 
 # 2) Пулы и семафор
 # максимально допустимое число параллельных видео‑генераций
-MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT", "1"))
+MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT", "6"))
 
 # семафор, который будет блокировать вызовы сверх лимита
 generate_semaphore = threading.Semaphore(MAX_CONCURRENT)
