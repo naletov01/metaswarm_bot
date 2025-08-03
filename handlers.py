@@ -5,7 +5,7 @@ import logging
 import replicate
 
 import time
-import tempfile, requests, httpx, os, 
+import tempfile, requests, httpx, os 
 import threading
 from threading import Thread, Event
 from telegram import ChatAction, InlineKeyboardButton, InlineKeyboardMarkup
