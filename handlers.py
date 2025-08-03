@@ -300,14 +300,27 @@ def menu_callback(update: Update, context: CallbackContext):
     chat_id = q.message.chat.id
 
     if q.data in MODEL_MAP:
-        user_data.setdefault(uid, {})["model"] = MODEL_MAP[q.data]
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=(
-                f"✅ Режим «{MODEL_MAP[q.data]}» выбран.\n"
-                "Теперь загрузите изображение и введите промпт."
-            ),
-        )
+        model = MODEL_MAP[q.data]
+        user_data.setdefault(uid, {})["model"] = model
+    
+        if q.data == CB_GEN_VEO:
+            # для VEO только промпт
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=(
+                    f"✅ Режим «{model}» выбран.\n"
+                    "Теперь введите текстовый промпт для генерации видео (без загрузки изображения)."
+                )
+            )
+        else:
+            # для остальных моделей — изображение + промпт
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=(
+                    f"✅ Режим «{model}» выбран.\n"
+                    "Сначала загрузите изображение, затем введите промпт для видео."
+                )
+            )
         return
 
     # 2) блокируем навигацию, если отписался
