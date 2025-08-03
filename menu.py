@@ -8,7 +8,7 @@ from config import ADMIN_IDS
 CB_MAIN            = "menu:main"
 CB_GENERATION      = "menu:generation"
 CB_PROFILE         = "menu:profile"
-CB_INFO            = "menu:info"
+# CB_INFO            = "menu:info"
 CB_PARTNER         = "menu:partner"
 
 CB_SUB_PREMIUM     = "menu:sub_premium"
@@ -60,7 +60,7 @@ MENUS = {
             [InlineKeyboardButton("🎞 Генерация видео", callback_data=CB_GENERATION),],
             [InlineKeyboardButton("🔥 Купить подписку",    callback_data=CB_SUB_PREMIUM),],
             [InlineKeyboardButton("👤 Профиль",          callback_data=CB_PROFILE),],
-            [InlineKeyboardButton("ℹ️ О моделях",        callback_data=CB_INFO),],
+            # [InlineKeyboardButton("ℹ️ О моделях",        callback_data=CB_INFO),],
             [InlineKeyboardButton("🤑 Партнёрка",        callback_data=CB_PARTNER),],
         ],
     },
