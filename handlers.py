@@ -297,7 +297,8 @@ def menu_callback(update: Update, context: CallbackContext):
     # 2) блокируем навигацию, если отписался
     if not check_subscription(uid):
         return send_subscribe_prompt(chat_id)
-
+        
+    menu_key = q.data
     text, markup = render_menu(menu_key, uid)
     q.edit_message_text(text=text, reply_markup=markup, parse_mode="HTML")
 
