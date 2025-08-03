@@ -20,7 +20,7 @@ from menu import CB_MAIN
 from config import bot, WEBHOOK_PATH
 from handlers import (
     start, image_upload_handler, text_handler, menu_callback, 
-    on_check_sub, choose_model, profile, info, partner)
+    on_check_sub, choose_model, profile, partner)
 
 # подтягиваем Bot и путь вебхука из config
 bot = config.bot
@@ -37,7 +37,7 @@ bot.set_my_commands([
     BotCommand("start",        "🏠 Главное меню"),
     BotCommand("choose_model", "🎞 Генерация видео"),
     BotCommand("profile",      "👤 Профиль"),
-    BotCommand("info",         "ℹ️ О генеративных моделях"),
+    # BotCommand("info",         "ℹ️ О генеративных моделях"),
     BotCommand("partner",      "🤑 Партнёрская программа"),
 ])
 
@@ -45,7 +45,7 @@ bot.set_my_commands([
 dp.add_handler(CommandHandler("start",        start))
 dp.add_handler(CommandHandler("choose_model", choose_model))
 dp.add_handler(CommandHandler("profile",      profile))
-dp.add_handler(CommandHandler("info",         info))
+# dp.add_handler(CommandHandler("info",         info))
 dp.add_handler(CommandHandler("partner",      partner))
 dp.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^(menu:|gen:)"))
 dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
