@@ -73,20 +73,20 @@ def send_subscribe_prompt(chat_id: int):
 
 
 # ——— Фоновая генерация видео ———
-    def generate_and_send_video(user_id):
-        logger.info(f"[{user_id}] ▶️ Запущена фоновая генерация видео")
-        data = user_data.get(user_id, {})
-        image_url = data.get("last_image")
-        prompt    = data.get("prompt")
-        model     = data.get("model", "kling-pro")
+def generate_and_send_video(user_id):
+    logger.info(f"[{user_id}] ▶️ Запущена фоновая генерация видео")
+    data = user_data.get(user_id, {})
+    image_url = data.get("last_image")
+    prompt    = data.get("prompt")
+    model     = data.get("model", "kling-pro")
     
-        # запускаем фоновой поток, который шлёт «upload_video» раз в 10 сек
-        stop_event = threading.Event()
-        threading.Thread(
-            target=_keep_upload_action,
-            args=(bot, user_id, stop_event),
-        daemon=True
-    ).start()
+    # запускаем фоновой поток, который шлёт «upload_video» раз в 10 сек
+    stop_event = threading.Event()
+    threading.Thread(
+        target=_keep_upload_action,
+        args=(bot, user_id, stop_event),
+    daemon=True
+).start()
 
     try:
         logger.info(f"Start video generation: model={model}, prompt={prompt}")
