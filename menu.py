@@ -141,9 +141,9 @@ MENUS = {
     CB_SUB_PREMIUM: {
         "text": "🔥 <b>Подписка Premium</b>\n\nВыберите тариф:",
         "buttons": [
-            [ InlineKeyboardButton("💰 3 дня — 1 $",      callback_data=CB_SUB_3D) ],
-            [ InlineKeyboardButton("🔥 Месяц — 10 $",     callback_data=CB_SUB_MONTH) ],
-            [ InlineKeyboardButton("💎 Год — 120 $ 65 $", callback_data=CB_SUB_YEAR) ],
+            [ InlineKeyboardButton("💰 3 дня | 1 $",      callback_data=CB_SUB_3D) ],
+            [ InlineKeyboardButton("🔥 Месяц | 10 $",     callback_data=CB_SUB_MONTH) ],
+            [ InlineKeyboardButton("💎 Год | 65 $", callback_data=CB_SUB_YEAR) ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_PROFILE) ],
         ],
     },
@@ -152,9 +152,9 @@ MENUS = {
     CB_BUY_CREDITS: {
         "text": "💳 <b>Пакеты кредитов</b>\n\nВыберите объём:",
         "buttons": [
-            [ InlineKeyboardButton("💰 Standart — 10 $", callback_data=CB_CRED_STD) ],
-            [ InlineKeyboardButton("🔥 Pro — 30 $",      callback_data=CB_CRED_PRO) ],
-            [ InlineKeyboardButton("💎 Max — 50 $",      callback_data=CB_CRED_MAX) ],
+            [ InlineKeyboardButton("💰 Standart | 10 $", callback_data=CB_CRED_STD) ],
+            [ InlineKeyboardButton("🔥 Pro | 30 $",      callback_data=CB_CRED_PRO) ],
+            [ InlineKeyboardButton("💎 Max | 50 $",      callback_data=CB_CRED_MAX) ],
             [ InlineKeyboardButton("⬅️ Назад",            callback_data=CB_PROFILE) ],
         ],
     },
@@ -183,9 +183,9 @@ MENUS = {
             "⚠️ Переходя на оплату вы соглашаетесь с регламентом рекуррентных платежей."
         ),
         "buttons": [
-            [ InlineKeyboardButton("TG Stars — 150 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe — 1 $",       url="https://example.com") ],
-            [ InlineKeyboardButton("Crypto — 1 $",       url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 125 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("Stripe | 1 $",       url="https://example.com") ],
+            [ InlineKeyboardButton("Crypto | 1 $",       url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",            callback_data=CB_SUB_PREMIUM) ],
         ],
     },
@@ -196,9 +196,9 @@ MENUS = {
             "⚠️ Переходя на оплату вы соглашаетесь с регламентом рекуррентных платежей."
         ),
         "buttons": [
-            [ InlineKeyboardButton("TG Stars — 1000 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe — 10 $",      url="https://example.com") ],
-            [ InlineKeyboardButton("Crypto — 10 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 1000 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("Stripe | 10 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("Crypto | 10 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",            callback_data=CB_SUB_PREMIUM) ],
         ],
     },
@@ -209,9 +209,9 @@ MENUS = {
             "⚠️ Переходя на оплату вы соглашаетесь с регламентом рекуррентных платежей."
         ),
         "buttons": [
-            [ InlineKeyboardButton("TG Stars — 3500 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe — 120 $ 65 $", url="https://example.com") ],
-            [ InlineKeyboardButton("Crypto — 120 $ 65 $", url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 3500 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("Stripe | 65 $", url="https://example.com") ],
+            [ InlineKeyboardButton("Crypto | 65 $", url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_SUB_PREMIUM) ],
         ],
     },
@@ -220,27 +220,27 @@ MENUS = {
     CB_CRED_STD: {
         "text": "💰 <b>Пакет Standart</b>\n\nВыберите метод оплаты:",
         "buttons": [
-            [ InlineKeyboardButton("TG Stars — 1000 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe — 10 $",      url="https://example.com") ],
-            [ InlineKeyboardButton("Crypto — 10 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 1000 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("Stripe | 10 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("Crypto | 10 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_BUY_CREDITS) ],
         ],
     },
     CB_CRED_PRO: {
         "text": "🔥 <b>Пакет Pro</b>\n\nВыберите метод оплаты:",
         "buttons": [
-            [ InlineKeyboardButton("TG Stars — 2500 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe — 30 $",      url="https://example.com") ],
-            [ InlineKeyboardButton("Crypto — 30 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 2500 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("Stripe | 30 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("Crypto | 30 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_BUY_CREDITS) ],
         ],
     },
     CB_CRED_MAX: {
         "text": "💎 <b>Пакет Max</b>\n\nВыберите метод оплаты:",
         "buttons": [
-            [ InlineKeyboardButton("TG Stars — 3500 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe — 50 $",      url="https://example.com") ],
-            [ InlineKeyboardButton("Crypto — 50 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 3500 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("Stripe | 50 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("Crypto | 50 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_BUY_CREDITS) ],
         ],
     },
