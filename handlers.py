@@ -13,6 +13,9 @@ from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_INFO, CB_PARTNER
 from menu import CB_GEN_KLING_STD, CB_GEN_KLING_PRO, CB_GEN_KLING_MAST, CB_GEN_VEO
 from config import CHANNEL_LINK, CHANNEL_USERNAME, user_data, user_limits
 
+from menu import MODEL_MAP
+from config import user_data
+
 
 
 def _keep_upload_action(bot, chat_id, stop_event):
@@ -276,21 +279,18 @@ def partner(update: Update, context: CallbackContext):
 
 def menu_callback(update: Update, context: CallbackContext):
     q = update.callback_query
-    # 1) сразу отвечаем на callback, чтобы убрать спиннер
     q.answer()
-
     uid = q.from_user.id
     chat_id = q.message.chat.id
-    data = user_data.setdefault(uid, {})
 
     if q.data in MODEL_MAP:
-        data["model"] = MODEL_MAP[q.data]
+        user_data.setdefault(uid, {})["model"] = MODEL_MAP[q.data]
         context.bot.send_message(
             chat_id=chat_id,
             text=(
-                "✅ Режим «{}» выбран.\n"
+                f"✅ Режим «{MODEL_MAP[q.data]}» выбран.\n"
                 "Теперь загрузите изображение и введите промпт."
-            ).format(data["model"]),
+            ),
         )
         return
 
@@ -298,8 +298,6 @@ def menu_callback(update: Update, context: CallbackContext):
     if not check_subscription(uid):
         return send_subscribe_prompt(chat_id)
 
-    # 3) показываем нужное меню
-    menu_key = q.data  # "menu:main", "menu:generation" и т.д.
     text, markup = render_menu(menu_key, uid)
     q.edit_message_text(text=text, reply_markup=markup, parse_mode="HTML")
 
