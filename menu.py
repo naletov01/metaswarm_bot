@@ -107,17 +107,17 @@ MENUS = {
         ],
     },
 
-    # Меню «О генеративных моделях»
-    CB_INFO: {
-        "text": "ℹ️ <b>О генеративных моделях</b>\n\nКраткое описание доступных режимов:",
-        "buttons": [
-            [ InlineKeyboardButton("🎬 Kling Standard 🎬", callback_data=CB_GEN_KLING_STD) ],
-            [ InlineKeyboardButton("🎥 Kling Pro 🎥",       callback_data=CB_GEN_KLING_PRO) ],
-            [ InlineKeyboardButton("🏆 Kling Master 🏆",    callback_data=CB_GEN_KLING_MAST) ],
-            [ InlineKeyboardButton("🔥 Veo3 со звуком 🔥",  callback_data=CB_GEN_VEO) ],
-            [ InlineKeyboardButton("⬅️ Назад",              callback_data=CB_MAIN) ],
-        ],
-    },
+    # # Меню «О генеративных моделях»
+    # CB_INFO: {
+    #     "text": "ℹ️ <b>О генеративных моделях</b>\n\nКраткое описание доступных режимов:",
+    #     "buttons": [
+    #         [ InlineKeyboardButton("🎬 Kling Standard 🎬", callback_data=CB_GEN_KLING_STD) ],
+    #         [ InlineKeyboardButton("🎥 Kling Pro 🎥",       callback_data=CB_GEN_KLING_PRO) ],
+    #         [ InlineKeyboardButton("🏆 Kling Master 🏆",    callback_data=CB_GEN_KLING_MAST) ],
+    #         [ InlineKeyboardButton("🔥 Veo3 со звуком 🔥",  callback_data=CB_GEN_VEO) ],
+    #         [ InlineKeyboardButton("⬅️ Назад",              callback_data=CB_MAIN) ],
+    #     ],
+    # },
 
     # Меню «Партнёрская программа»
     CB_PARTNER: {
