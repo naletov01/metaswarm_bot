@@ -10,6 +10,7 @@ from telegram import Update
 import config
 from menu import render_menu, MENUS
 from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_INFO, CB_PARTNER 
+from menu import CB_GEN_KLING_STD, CB_GEN_KLING_PRO, CB_GEN_KLING_MAST, CB_GEN_VEO
 from config import CHANNEL_LINK, CHANNEL_USERNAME, user_data, user_limits
 
 
@@ -280,6 +281,18 @@ def menu_callback(update: Update, context: CallbackContext):
 
     uid = q.from_user.id
     chat_id = q.message.chat.id
+    data = user_data.setdefault(uid, {})
+
+    if q.data in MODEL_MAP:
+        data["model"] = MODEL_MAP[q.data]
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=(
+                "✅ Режим «{}» выбран.\n"
+                "Теперь загрузите изображение и введите промпт."
+            ).format(data["model"]),
+        )
+        return
 
     # 2) блокируем навигацию, если отписался
     if not check_subscription(uid):
@@ -376,22 +389,6 @@ def text_handler(update: Update, context: CallbackContext):
     if now - last < MIN_INTERVAL:
         wait = int(MIN_INTERVAL - (now - last))
         update.message.reply_text(f"Пожалуйста, подождите ещё {wait} сек.")
-        return
-
-    # Обработка выбора модели
-    model_map = {
-        "🎞 Видео (Kling Standard)": "kling-standard",
-        "🎞 Видео (Kling Pro)": "kling-pro",
-        "🎞 Видео (Kling Master)": "kling-master",
-        "🎞 Видео (Veo3)": "veo",
-    }
-    if text in model_map:
-        data["model"] = model_map[text]
-        update.message.reply_text(
-        "Режим выбран. Теперь загрузите изображение и введите промпт. \n\n"
-        "⚠️Важно!\n\n"
-        "Чем качественнее изображение и точнее промпт(инструкция для видео), тем лучше генерация!"
-        )
         return
 
     # Обработка промпта
