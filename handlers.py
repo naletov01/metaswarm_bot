@@ -16,7 +16,7 @@ from telegram import (
 from telegram.ext import CallbackContext
 
 from menu import render_menu, MENUS
-from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_INFO, CB_PARTNER 
+from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_PARTNER 
 from menu import CB_GEN_KLING_STD, CB_GEN_KLING_PRO, CB_GEN_KLING_MAST, CB_GEN_VEO  
 from menu import MODEL_MAP
 from config import (
@@ -277,14 +277,14 @@ def profile(update: Update, context: CallbackContext):
     text, markup = render_menu(CB_PROFILE, user_id)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
-# /info → О моделях
-def info(update: Update, context: CallbackContext):
-    user_id = update.effective_user.id
-    chat_id = update.effective_chat.id
-    if not check_subscription(user_id):
-        return send_subscribe_prompt(chat_id)
-    text, markup = render_menu(CB_INFO, user_id)
-    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
+# # /info → О моделях
+# def info(update: Update, context: CallbackContext):
+#     user_id = update.effective_user.id
+#     chat_id = update.effective_chat.id
+#     if not check_subscription(user_id):
+#         return send_subscribe_prompt(chat_id)
+#     text, markup = render_menu(CB_INFO, user_id)
+#     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
 # /partner → Партнёрка
 def partner(update: Update, context: CallbackContext):
