@@ -18,7 +18,7 @@ from telegram.ext import CallbackContext
 from menu import render_menu, MENUS
 from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_PARTNER 
 from menu import CB_GEN_KLING_STD, CB_GEN_KLING_PRO, CB_GEN_KLING_MAST, CB_GEN_VEO  
-from menu import MODEL_MAP
+from menu import MODEL_MAP, CB_SUB_PREMIUM
 from config import (
     bot,                    # Telegram Bot
     executor,               # ThreadPoolExecutor
@@ -31,7 +31,8 @@ from config import (
     user_limits,
     CHANNEL_USERNAME,
     CHANNEL_LINK,
-    replicate_client
+    replicate_client,
+    ADMIN_IDS
 )
 
 
