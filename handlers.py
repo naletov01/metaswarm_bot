@@ -299,6 +299,18 @@ def partner(update: Update, context: CallbackContext):
 def menu_callback(update: Update, context: CallbackContext):
     q = update.callback_query
     q.answer()
+    
+    # если это нажатие на одну из моделей и нет подписки — ведём в меню покупки
+    data = q.data
+    if data in MODEL_MAP and not check_subscription(uid):
+        text, markup = render_menu(CB_SUB_PREMIUM, uid)
+        return context.bot.send_message(
+            chat_id=chat_id,
+            text=text,
+            reply_markup=markup,
+            parse_mode="HTML"
+        )
+
     uid = q.from_user.id
     chat_id = q.message.chat.id
 
