@@ -22,6 +22,33 @@ from handlers import (
     start, image_upload_handler, text_handler, menu_callback, 
     on_check_sub, choose_model, profile, partner)
 
+# ─────────────────────────────────────────────────────────────────────────────
+from sqlalchemy import (
+    Column, Integer, Boolean, DateTime, String, create_engine
+)
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from config import DATABASE_URL
+
+Base = declarative_base()
+engine = create_engine(DATABASE_URL, echo=False)
+SessionLocal = sessionmaker(bind=engine)
+
+class User(Base):
+    __tablename__ = 'users'
+    user_id         = Column(Integer, primary_key=True, index=True)
+    credits         = Column(Integer, default=0, nullable=False)
+    premium         = Column(Boolean, default=False, nullable=False)
+    subscription_type = Column(String, nullable=True)
+    premium_until   = Column(DateTime, nullable=True)
+    invited_count   = Column(Integer, default=0, nullable=False)
+    bonus_credits   = Column(Integer, default=0, nullable=False)
+
+# При старте приложения:
+def init_db():
+    Base.metadata.create_all(bind=engine)
+# ─────────────────────────────────────────────────────────────────────────────
+
 # подтягиваем Bot и путь вебхука из config
 bot = config.bot
 WEBHOOK_PATH = config.WEBHOOK_PATH
@@ -51,7 +78,12 @@ dp.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^(menu:|gen:)"))
 dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
 dp.add_handler(MessageHandler(Filters.photo | (Filters.document & Filters.document.mime_type("image/")), image_upload_handler))
 dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
-    
+
+
+if __name__ == '__main__':
+    init_db()
+    # … ваш код по запуску Updater и т.д.
+
 
 # ——— Webhook endpoint ———
 @app.post(WEBHOOK_PATH)
