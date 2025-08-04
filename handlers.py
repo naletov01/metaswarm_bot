@@ -58,7 +58,8 @@ def get_user(db: Session, user_id: int) -> 'User':
 
 
 # — Проверка и списание кредитов; возвращает (ok, message)
-def charge_credits(user: User, model_key: str, db: Session):
+def charge_credits(user: 'User', model_key: str, db: Session):
+    from main import User
     cost_map = {
         'kling-standard': COST_KLING_STD,
         'kling-pro':      COST_KLING_PRO,
@@ -85,7 +86,8 @@ def charge_credits(user: User, model_key: str, db: Session):
 
 
 # — Применить подписку (вызывается при оплате)
-def apply_subscription(user: User, sub_type: str, db: Session):
+def apply_subscription(user: 'User', sub_type: str, db: Session):
+    from main import User
     days = SUB_PERIOD_DAYS[sub_type]
     add_credits = SUB_CREDITS[sub_type]
     now = datetime.utcnow()
