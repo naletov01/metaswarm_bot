@@ -42,7 +42,6 @@ from config import (
     COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO,
     SUB_CREDITS, SUB_PERIOD_DAYS
 )
-from main import SessionLocal, User
 
 
 # — Получить или создать профиль
@@ -148,6 +147,7 @@ def generate_and_send_video(user_id):
     model     = data.get("model", "kling-pro")
 
     # ───── ВСТАВКА: Списание кредитов ─────
+    from main import SessionLocal
     with SessionLocal() as db:
         user = get_user(db, user_id)
         ok, errmsg = charge_credits(user, model, db)
