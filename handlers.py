@@ -301,26 +301,27 @@ def menu_callback(update: Update, context: CallbackContext):
     q.answer()
     uid = q.from_user.id
     chat_id = q.message.chat.id
+    data = q.data
+    
     has_premium = (uid in ADMIN_IDS) or (config.user_limits.get(uid, 0) > 0)
     
-    # если это нажатие на одну из моделей и нет подписки — ведём в меню покупки
-    data = q.data
-    if data in MODEL_MAP and not has_premium:
-        text, markup = render_menu(CB_SUB_PREMIUM, uid)
-        return context.bot.send_message(
-            chat_id=chat_id,
-            text=text,
-            reply_markup=markup,
-            parse_mode="HTML"
-        )
+    # 1) Блокировка и выбор моделей
+    if data in MODEL_MAP:
+        if not has_premium:
+            text, markup = render_menu(CB_SUB_PREMIUM, uid)
+            return context.bot.send_message(
+                chat_id=chat_id,
+                text=text,
+                reply_markup=markup,
+                parse_mode="HTML"
+            )
 
-    if q.data in MODEL_MAP:
-        model = MODEL_MAP[q.data]
+        # у пользователя есть премиум — сохраняем модель
+        model = MODEL_MAP[data]
         user_data.setdefault(uid, {})["model"] = model
-    
-        if q.data == CB_GEN_VEO:
-            # для VEO только промпт
-            context.bot.send_message(
+
+        if data == CB_GEN_VEO:
+            return context.bot.send_message(
                 chat_id=chat_id,
                 text=(
                     f"✅ Режим «{model}» выбран.\n"
@@ -328,15 +329,13 @@ def menu_callback(update: Update, context: CallbackContext):
                 )
             )
         else:
-            # для остальных моделей — изображение + промпт
-            context.bot.send_message(
+            return context.bot.send_message(
                 chat_id=chat_id,
                 text=(
                     f"✅ Режим «{model}» выбран.\n"
                     "Загрузите изображение, затем введите промпт для видео."
                 )
             )
-        return
 
     # 2) блокируем навигацию, если отписался
     if not check_subscription(uid):
