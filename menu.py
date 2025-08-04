@@ -279,12 +279,11 @@ def render_menu(menu_key: str, user_id: int) -> (str, InlineKeyboardMarkup):
         for row in m["buttons"]:
             text = row[0].text
             cb   = row[0].callback_data
-            buttons.append([
-                InlineKeyboardButton(
-                    _maybe_lock(text, has_premium),
-                    callback_data=cb
-                )
-            ])
+            if cb == CB_MAIN:
+                btn_text = text
+            else:
+                btn_text = _maybe_lock(text, has_premium)
+                buttons.append([InlineKeyboardButton(btn_text, callback_data=cb)])
     else:
         buttons = m["buttons"]
 
