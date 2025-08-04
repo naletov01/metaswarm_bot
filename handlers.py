@@ -49,6 +49,7 @@ if TYPE_CHECKING:
 
 # — Получить или создать профиль
 def get_user(db: Session, user_id: int) -> 'User':
+    from main import User
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         user = User(user_id=user_id)
