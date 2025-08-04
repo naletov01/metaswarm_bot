@@ -89,7 +89,7 @@ MENUS = {
     },
 
     # Меню «Профиль»
-def get_profile_text(user_id: int) -> str:
+def get_profile_text(user_id):
     db = SessionLocal()
     user = get_user(db, user_id)
     c = user.credits + user.bonus_credits
