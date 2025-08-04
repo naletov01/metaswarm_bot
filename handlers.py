@@ -56,9 +56,9 @@ def get_user(db: Session, user_id: int) -> User:
 # — Проверка и списание кредитов; возвращает (ok, message)
 def charge_credits(user: User, model_key: str, db: Session):
     cost_map = {
-        'kling_standard': COST_KLING_STD,
-        'kling_pro':      COST_KLING_PRO,
-        'kling_master':   COST_KLING_MAST,
+        'kling-standard': COST_KLING_STD,
+        'kling-pro':      COST_KLING_PRO,
+        'kling-master':   COST_KLING_MAST,
         'veo':            COST_VEO,
     }
     cost = cost_map[model_key]
@@ -187,7 +187,7 @@ def generate_and_send_video(user_id):
         # Вызов нужной модели
         if model == "kling-standard":
             logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
-            output = replicate.run(
+            output = replicate_client.run(
                 "kwaivgi/kling-v2.1",
                 input={
                     "mode": "standard",
@@ -199,7 +199,7 @@ def generate_and_send_video(user_id):
             )
         elif model == "kling-pro":
             logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
-            output = replicate.run(
+            output = replicate_client.run(
                 "kwaivgi/kling-v2.1",
                 input={
                     "mode": "pro",
@@ -211,7 +211,7 @@ def generate_and_send_video(user_id):
             )
         elif model == "kling-master":
             logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
-            output = replicate.run(
+            output = replicate_client.run(
                 "kwaivgi/kling-v2.1-master",
                 input={
                     "prompt": f"{POSITIVE_PROMPT}, {prompt}",
@@ -223,7 +223,7 @@ def generate_and_send_video(user_id):
             )
         elif model == "veo":
             logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
-            output = replicate.run(
+            output = replicate_client.run(
                 "google/veo-3-fast",
                 input={"prompt": prompt}
             )
@@ -448,7 +448,7 @@ def on_check_sub(update: Update, context: CallbackContext):
             pass
 
         # 3) отправляем главное меню inline-кнопками
-        text, markup = render_menu(CB_MAIN, uid)
+        text, markup = render_menu(CB_MAIN, user_id)
         context.bot.send_message(
             chat_id=chat_id,
             text=text,
