@@ -42,6 +42,7 @@ from config import (
     COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO,
     SUB_CREDITS, SUB_PERIOD_DAYS
 )
+from main import User
 
 
 # — Получить или создать профиль
