@@ -63,6 +63,41 @@ replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
 executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Стоимость одной генерации
+COST_KLING_STD  = 100   # кредитов
+COST_KLING_PRO  = 150
+COST_KLING_MAST = 300
+COST_VEO        = 600
+
+# Подписки: сколько кредитов и на какой срок (в днях)
+SUB_CREDITS   = {
+    'day':   150,     # 3-дн. одноразово
+    'month': 1000,    # ежемесячно
+    'year':  12000,   # ежегодно
+}
+SUB_PERIOD_DAYS = {
+    'day':   3,
+    'month': 30,
+    'year':  365,
+}
+
+# Пакеты кредитов (цена в $, кредиты)
+PACKAGE_OPTIONS = {
+    'standard': {'price_usd': 10, 'credits': 800},
+    'pro':      {'price_usd': 30, 'credits': 3000},
+    'max':      {'price_usd': 50, 'credits': 6000},
+}
+
+# Реферальная программа
+REFERRAL_BONUS_PER_5 = 150   # за каждые 5 приглашённых
+MAX_INVITES         = 10     # максимум друзей
+
+# ORM / БД
+DATABASE_URL = 'sqlite:///bot.db'
+# ─────────────────────────────────────────────────────────────────────────────
+
+
 if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
     logger.error("Missing required environment variables")
     raise RuntimeError("Missing API keys or webhook secret")
