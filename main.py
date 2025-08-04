@@ -14,7 +14,6 @@ from telegram.ext import (
     CallbackContext,
     CallbackQueryHandler
 )
-import replicate
 
 from menu import CB_MAIN
 from config import bot, WEBHOOK_PATH
