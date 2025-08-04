@@ -19,6 +19,7 @@ from menu import render_menu, MENUS
 from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_PARTNER 
 from menu import CB_GEN_KLING_STD, CB_GEN_KLING_PRO, CB_GEN_KLING_MAST, CB_GEN_VEO  
 from menu import MODEL_MAP, CB_SUB_PREMIUM
+from menu import get_profile_text
 from config import (
     bot,                    # Telegram Bot
     executor,               # ThreadPoolExecutor
@@ -350,7 +351,7 @@ def profile(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
-    text, markup = render_menu(CB_PROFILE, user_id)
+    text, markup = get_profile_text(user_id)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
 # # /info → О моделях
