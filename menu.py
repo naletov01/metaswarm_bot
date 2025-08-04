@@ -4,8 +4,6 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import config
 from config import ADMIN_IDS
 from config import COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO, MAX_INVITES
-from handlers import get_user
-from main import SessionLocal
 from typing import Tuple
 
 # ——— CALLBACK_DATA КОНСТАНТЫ ———
@@ -244,8 +242,13 @@ MENUS = {
 
 # Меню «Профиль»
 def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
+
+    from handlers import get_user
+    from main     import SessionLocal
+    
     db = SessionLocal()
     user = get_user(db, user_id)
+    
     c = user.credits + user.bonus_credits
     lines = [
         "👤 <b>Ваш профиль</b>\n",
