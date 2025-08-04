@@ -34,6 +34,68 @@ from config import (
     replicate_client,
     ADMIN_IDS
 )
+# ─────────────────────────────────────────────────────────────────────────────
+from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
+from config import (
+    COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO,
+    SUB_CREDITS, SUB_PERIOD_DAYS
+)
+from main import SessionLocal, User
+
+
+# — Получить или создать профиль
+def get_user(db: Session, user_id: int) -> User:
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        user = User(user_id=user_id)
+        db.add(user); db.commit(); db.refresh(user)
+    return user
+
+
+# — Проверка и списание кредитов; возвращает (ok, message)
+def charge_credits(user: User, model_key: str, db: Session):
+    cost_map = {
+        'kling_standard': COST_KLING_STD,
+        'kling_pro':      COST_KLING_PRO,
+        'kling_master':   COST_KLING_MAST,
+        'veo':            COST_VEO,
+    }
+    cost = cost_map[model_key]
+    total_available = user.credits + user.bonus_credits
+    if total_available < cost:
+        return False, (
+            f"Недостаточно кредитов: у вас {total_available}, нужно {cost}. "
+            f"Купите пакет или возьмите бонусные кредиты "
+            f"({user.bonus_credits} осталось)."
+        )
+    # списываем сначала из бонусов
+    if user.bonus_credits >= cost:
+        user.bonus_credits -= cost
+    else:
+        remaining = cost - user.bonus_credits
+        user.bonus_credits = 0
+        user.credits -= remaining
+    db.commit()
+    return True, None
+
+
+# — Применить подписку (вызывается при оплате)
+def apply_subscription(user: User, sub_type: str, db: Session):
+    days = SUB_PERIOD_DAYS[sub_type]
+    add_credits = SUB_CREDITS[sub_type]
+    now = datetime.utcnow()
+    # если есть активная — продлеваем
+    if user.premium and user.premium_until and user.premium_until > now:
+        start = user.premium_until
+    else:
+        start = now
+    user.premium = True
+    user.subscription_type = sub_type
+    user.premium_until = start + timedelta(days=days)
+    user.credits += add_credits
+    db.commit()
+# ─────────────────────────────────────────────────────────────────────────────
 
 
 
