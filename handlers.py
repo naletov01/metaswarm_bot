@@ -301,10 +301,11 @@ def menu_callback(update: Update, context: CallbackContext):
     q.answer()
     uid = q.from_user.id
     chat_id = q.message.chat.id
+    has_premium = (uid in ADMIN_IDS) or (config.user_limits.get(uid, 0) > 0)
     
     # если это нажатие на одну из моделей и нет подписки — ведём в меню покупки
     data = q.data
-    if data in MODEL_MAP and not check_subscription(uid):
+    if data in MODEL_MAP and not has_premium:
         text, markup = render_menu(CB_SUB_PREMIUM, uid)
         return context.bot.send_message(
             chat_id=chat_id,
