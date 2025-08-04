@@ -145,6 +145,19 @@ def generate_and_send_video(user_id):
     image_url = data.get("last_image")
     prompt    = data.get("prompt")
     model     = data.get("model", "kling-pro")
+
+    # ───── ВСТАВКА: Списание кредитов ─────
+    with SessionLocal() as db:
+        user = get_user(db, user_id)
+        ok, errmsg = charge_credits(user, model, db)
+        if not ok:
+            bot.send_message(
+                chat_id=user_id,
+                text=errmsg,
+                parse_mode="HTML"
+            )
+            return
+    # ──── /КОНЕЦ вставки┄────
     
     # запускаем фоновой поток, который шлёт «upload_video» раз в 10 сек
     stop_event = threading.Event()
