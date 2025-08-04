@@ -277,13 +277,13 @@ def render_menu(menu_key: str, user_id: int) -> (str, InlineKeyboardMarkup):
     # если это меню Генерации — ставим замок
     if menu_key == CB_GENERATION:
         for row in m["buttons"]:
-            text = row[0].text
-            cb   = row[0].callback_data
+            orig_text = row[0].text
+            cb        = row[0].callback_data
             if cb == CB_MAIN:
-                btn_text = text
+                btn_text = orig_text
             else:
-                btn_text = _maybe_lock(text, has_premium)
-                buttons.append([InlineKeyboardButton(btn_text, callback_data=cb)])
+                btn_text = _maybe_lock(orig_text, has_premium)
+            buttons.append([InlineKeyboardButton(btn_text, callback_data=cb)])
     else:
         buttons = m["buttons"]
 
