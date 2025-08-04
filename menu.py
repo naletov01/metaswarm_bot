@@ -3,6 +3,9 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import config
 from config import ADMIN_IDS
+from config import COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO, MAX_INVITES
+from handlers import get_user
+from main import SessionLocal
 
 # ——— CALLBACK_DATA КОНСТАНТЫ ———
 CB_MAIN            = "menu:main"
@@ -86,28 +89,35 @@ MENUS = {
     },
 
     # Меню «Профиль»
-    CB_PROFILE: {
-        "text": (
-            "👤 <b>Ваш профиль</b>\n\n"
-            "Кредитов осталось: 1000\n\n"
-            "Генераций осталось:\n"
-            "→ Kling Standard: 15\n"
-            "→ Kling Pro: 10\n"
-            "→ Kling Master: 5\n"
-            "→ Veo3: 3\n\n"
-            "Приглашенных друзей: 0/10\n\n"
-            "Бесплатных генераций: 0\n\n"
-            "Подписка Premium: Активна ✅\n"
-            "∙ Срок истечения: 08.08.2025 в 22:04\n\n"
-            "💡 Если генерации закончились — их всегда можно докупить!"
-        ),
-        "buttons": [
-            [ InlineKeyboardButton("🔥 Купить подписку",    callback_data=CB_SUB_PREMIUM) ],
-            [ InlineKeyboardButton("💳 Купить кредиты",     callback_data=CB_BUY_CREDITS) ],
-            [ InlineKeyboardButton("🆓 Бесплатные генерации", callback_data=CB_FREE_GEN) ],
-            [ InlineKeyboardButton("⬅️ Назад",               callback_data=CB_MAIN) ],
-        ],
-    },
+def get_profile_text(user_id: int) -> str:
+    db = SessionLocal()
+    user = get_user(db, user_id)
+    c = user.credits + user.bonus_credits
+    lines = [
+        "👤 <b>Ваш профиль</b>\n",
+        f"Кредитов осталось: {c}\n",
+        "Генераций осталось:",
+        f"→ Kling Standard: {c // COST_KLING_STD}",
+        f"→ Kling Pro:      {c // COST_KLING_PRO}",
+        f"→ Kling Master:   {c // COST_KLING_MAST}",
+        f"→ Veo3:           {c // COST_VEO}\n",
+        f"Приглашённых друзей: {user.invited_count}/{MAX_INVITES}",
+        f"Бесплатных генераций (бонус): {user.bonus_credits}\n",
+        f"Подписка Premium: {'Активна ✅' if user.premium else 'Не активна ❌'}"
+    ]
+    if user.premium and user.premium_until:
+          lines.append(f"∙ Срок истечения: {user.premium_until.strftime('%Y-%m-%d')}")
+    lines.append("\n💡 Если генерации закончились — их всегда можно докупить!")
+    
+    keyboard = InlineKeyboardMarkup([
+    [InlineKeyboardButton("🔥 Купить подписку",    callback_data=CB_SUB_PREMIUM)],
+    [InlineKeyboardButton("💳 Купить кредиты",     callback_data=CB_BUY_CREDITS)],
+    [InlineKeyboardButton("🆓 Бесплатные генерации", callback_data=CB_FREE_GEN)],
+    [InlineKeyboardButton("⬅️ Назад",               callback_data=CB_MAIN)],
+    ])
+
+    db.close()
+    return "\n".join(lines), keyboard
 
     # # Меню «О генеративных моделях»
     # CB_INFO: {
