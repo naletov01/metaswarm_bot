@@ -495,6 +495,15 @@ def image_upload_handler(update: Update, context: CallbackContext):
         if update.message.caption:
             prompt = update.message.caption.strip()
             data["prompt"] = prompt
+            
+            # --- быстрый чек кредитов ---
+            with SessionLocal() as db:
+                user = get_user(db, user_id)
+                ok, errmsg = charge_credits(user, data.get("model", "kling-pro"), db)
+                if not ok:
+                    update.message.reply_text(errmsg, parse_mode="HTML")
+                    return
+                    
             update.message.reply_text("⏳ Генерирую видео по изображению и промпту… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
             executor.submit(queued_generate_and_send_video, user_id)
         else:
@@ -531,6 +540,15 @@ def text_handler(update: Update, context: CallbackContext):
         data["model"] = data.get("model", "kling-pro")
         data["prompt"] = text
         data["last_action"] = now
+        
+        # --- быстрый чек кредитов ---
+        with SessionLocal() as db:
+            user = get_user(db, user_id)
+            ok, errmsg = charge_credits(user, model, db)
+            if not ok:
+                update.message.reply_text(errmsg, parse_mode="HTML")
+                return
+                
         update.message.reply_text("⏳ Видео генерируется… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
         executor.submit(queued_generate_and_send_video, user_id)
     else:
