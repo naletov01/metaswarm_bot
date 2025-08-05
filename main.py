@@ -30,10 +30,15 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 engine = create_engine(
-    config.DATABASE_URL,
-    connect_args={"check_same_thread": False},  # для SQLite
-    echo=False
-)
+    if config.DATABASE_URL.startswith("sqlite://"):
+        engine = create_engine(
+        config.DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        echo=False
+        )
+    else:
+        engine = create_engine(config.DATABASE_URL, echo=False)
+        )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 class User(Base):
