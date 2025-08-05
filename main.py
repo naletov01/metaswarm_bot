@@ -9,6 +9,7 @@ from telegram import Update, BotCommand
 from sqlalchemy.orm import Session
 from typing import Generator
 from db import engine, Base
+from db import get_db
 
 import config
 import handlers
