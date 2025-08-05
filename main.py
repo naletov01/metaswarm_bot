@@ -55,17 +55,6 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-def get_db() -> Generator[Session, None, None]:
-    db = SessionLocal()
-    try:
-        yield db
-        # тут обычно не коммитим — коммитятся внутри endpoint’ов
-    except Exception:
-        db.rollback()               # 1. Откатываем при ошибке
-        raise                       # 2. Пробрасываем дальше
-    finally:
-        db.close()                  # 3. Всегда закрываем
-
 app = FastAPI()
 
 @app.on_event("startup")
