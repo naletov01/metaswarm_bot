@@ -14,6 +14,8 @@ from telegram import (
     InlineKeyboardMarkup,
     Update)
 from telegram.ext import CallbackContext
+from models import User
+from main import SessionLocal
 
 from menu import render_menu, MENUS
 from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_PARTNER 
@@ -59,7 +61,6 @@ def get_user(db: Session, user_id: int) -> 'User':
 
 # — Проверка и списание кредитов; возвращает (ok, message)
 def charge_credits(user: 'User', model_key: str, db: Session):
-    from main import User
     cost_map = {
         'kling-standard': COST_KLING_STD,
         'kling-pro':      COST_KLING_PRO,
@@ -87,7 +88,6 @@ def charge_credits(user: 'User', model_key: str, db: Session):
 
 # — Применить подписку (вызывается при оплате)
 def apply_subscription(user: 'User', sub_type: str, db: Session):
-    from main import User
     days = SUB_PERIOD_DAYS[sub_type]
     add_credits = SUB_CREDITS[sub_type]
     now = datetime.utcnow()
@@ -153,7 +153,6 @@ def generate_and_send_video(user_id):
     model     = data.get("model", "kling-pro")
 
     # ───── ВСТАВКА: Списание кредитов ─────
-    from main import SessionLocal
     with SessionLocal() as db:
         user = get_user(db, user_id)
         ok, errmsg = charge_credits(user, model, db)
@@ -324,7 +323,6 @@ def queued_generate_and_send_video(user_id):
 
 # ——— Хендлеры ———
 def start(update: Update, context: CallbackContext):
-    from main import SessionLocal, User
     
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
