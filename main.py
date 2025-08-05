@@ -81,7 +81,12 @@ def init_db():
 
 @app.on_event("startup")
 async def setup_webhook():
-    await bot.set_webhook(f"{config.WEBHOOK_URL}{WEBHOOK_PATH}")
+    result: bool = await to_thread.run_sync(
+        bot.set_webhook,
+        f"{config.WEBHOOK_URL}{WEBHOOK_PATH}"
+    )
+    if not result:
+        logger.warning("Не удалось установить webhook")
 
 # ─────────────────────────────────────────────────────────────────────────────
 
