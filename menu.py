@@ -266,12 +266,13 @@ def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
               lines.append(f"∙ Срок истечения: {user.premium_until.strftime('%Y-%m-%d')}")
         lines.append("\n💡 Если генерации закончились — их всегда можно докупить!")
         
-        keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔥 Купить подписку",    callback_data=CB_SUB_PREMIUM)],
-        [InlineKeyboardButton("💳 Купить кредиты",     callback_data=CB_BUY_CREDITS)],
-        [InlineKeyboardButton("🆓 Бесплатные генерации", callback_data=CB_FREE_GEN)],
-        [InlineKeyboardButton("⬅️ Назад",               callback_data=CB_MAIN)],
-        ])
+        buttons = [
+            ("🔥 Купить подписку", CB_SUB_PREMIUM),
+            ("💳 Купить кредиты", CB_BUY_CREDITS),
+            ("🆓 Бесплатные генерации", CB_FREE_GEN),
+            ("⬅️ Назад", CB_MAIN),
+        ]
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(t, callback_data=cb)] for t, cb in buttons])
         
         return "\n".join(lines), keyboard
 
