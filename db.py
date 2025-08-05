@@ -2,6 +2,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from config import DATABASE_URL
+from sqlalchemy.orm import Session
+from typing import Generator
 
 Base = declarative_base()
 SessionLocal = sessionmaker(autoflush=False, autocommit=False)
