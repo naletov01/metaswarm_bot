@@ -543,6 +543,8 @@ def text_handler(update: Update, context: CallbackContext):
         
         # --- быстрый чек кредитов ---
         with SessionLocal() as db:
+            data = user_data.setdefault(user_id, {})
+            model = data.get("model")
             user = get_user(db, user_id)
             ok, errmsg = charge_credits(user, model, db)
             if not ok:
