@@ -6,7 +6,6 @@ from fastapi import Depends
 from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from telegram import Update, BotCommand
-from menu import CB_MAIN, CB_PROFILE
 
 import config
 import handlers
@@ -110,8 +109,6 @@ dp.add_handler(CommandHandler("profile",      profile))
 dp.add_handler(CommandHandler("partner",      partner))
 dp.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^(menu:|gen:)"))
 dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
-# dp.add_handler(CallbackQueryHandler(menu_callback, pattern=f"^{CB_PROFILE}$"))
-# dp.add_handler(CallbackQueryHandler(menu_callback, pattern=f"^{CB_MAIN}$"))
 
 img_filter = Filters.photo | (Filters.document & Filters.document.mime_type("image/*"))
 dp.add_handler(MessageHandler(img_filter, image_upload_handler))
