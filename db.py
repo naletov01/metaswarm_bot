@@ -12,3 +12,15 @@ if DATABASE_URL.startswith("sqlite://"):
 else:
     engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal.configure(bind=engine)
+
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+        # тут обычно не коммитим — коммитятся внутри endpoint’ов
+    except Exception:
+        db.rollback()               # 1. Откатываем при ошибке
+        raise                       # 2. Пробрасываем дальше
+    finally:
+        db.close()                  # 3. Всегда закрываем
