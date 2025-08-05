@@ -42,19 +42,6 @@ bot = config.bot
 WEBHOOK_PATH = config.WEBHOOK_PATH
 DATABASE_URL = config.DATABASE_URL
 
-class User(Base):
-    __tablename__ = 'users'
-    user_id         = Column(Integer, primary_key=True, index=True)
-    credits         = Column(Integer, default=0, nullable=False)
-    premium         = Column(Boolean, default=False, nullable=False)
-    subscription_type = Column(String, nullable=True)
-    premium_until   = Column(DateTime, nullable=True)
-    invited_count   = Column(Integer, default=0, nullable=False)
-    bonus_credits   = Column(Integer, default=0, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-
 app = FastAPI()
 
 @app.on_event("startup")
