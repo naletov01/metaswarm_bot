@@ -5,6 +5,8 @@ import config
 from config import ADMIN_IDS
 from config import COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO, MAX_INVITES
 from typing import Tuple
+from handlers import get_user
+from db     import SessionLocal
 
 # ——— CALLBACK_DATA КОНСТАНТЫ ———
 CB_MAIN            = "menu:main"
@@ -242,9 +244,6 @@ MENUS = {
 
 # Меню «Профиль»
 def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
-
-    from handlers import get_user
-    from main     import SessionLocal
     
     with SessionLocal() as db:
         user = get_user(db, user_id)
