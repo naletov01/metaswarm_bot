@@ -15,7 +15,9 @@ from telegram import (
     Update)
 from telegram.ext import CallbackContext
 from models import User
-from db import SessionLocal, get_user
+from db import SessionLocal
+from db_utils import get_user
+
 
 from menu import render_menu, MENUS
 from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_PARTNER 
