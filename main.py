@@ -70,7 +70,8 @@ bot.set_my_commands([
 # ——— Регистрация хендлеров ———
 dp.add_handler(CommandHandler("start",        start))
 dp.add_handler(CommandHandler("choose_model", choose_model))
-dp.add_handler(CommandHandler("profile",      profile))
+# dp.add_handler(CommandHandler("profile",      profile))
+dp.add_handler(CommandHandler("profile",     handlers.profile))
 # dp.add_handler(CommandHandler("info",         info))
 dp.add_handler(CommandHandler("partner",      partner))
 dp.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^(menu:|gen:)"))
