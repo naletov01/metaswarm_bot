@@ -134,11 +134,12 @@ async def telegram_webhook(request: Request, db=Depends(get_db)):
 def root():
     return {"status": "Bot is running"}
 
-from sqlalchemy.orm import Session
-@app.get("/debug/users")
-def debug_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    return [{"user_id": u.user_id, "credits": u.credits} for u in users]
+# проверка в браузере https://metaswarm-bot.onrender.com/debug/users
+# from sqlalchemy.orm import Session
+# @app.get("/debug/users")
+# def debug_users(db: Session = Depends(get_db)):
+#     users = db.query(User).all()
+#     return [{"user_id": u.user_id, "credits": u.credits} for u in users]
 
 
 
