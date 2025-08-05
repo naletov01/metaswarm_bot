@@ -61,7 +61,7 @@ POSITIVE_PROMPT = (
 # 5) Спиннер-интервал
 MIN_INTERVAL = 5  # сек между сообщениями UPLOAD_VIDEO
 
-replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
+# replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
 executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT)
 
 
