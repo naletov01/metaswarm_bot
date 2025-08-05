@@ -327,6 +327,17 @@ def start(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
 
+    # --- добавляем пользователя в базу при первом запуске ---
+    db = SessionLocal()
+    user = db.query(User).filter_by(user_id=user_id).first()
+    if not user:
+        user = User(user_id=user_id, credits=0)
+        db.add(user)
+        db.commit()
+        logger.info(f"Добавлен новый пользователь: {user_id}")
+    db.close()
+    # ---------------------------------------------------------
+
     # 1) проверяем подписку — если не подписан, выходим и показываем промпт
     if not check_subscription(user_id):
         return send_subscribe_prompt(chat_id)
