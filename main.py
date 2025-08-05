@@ -30,8 +30,12 @@ from sqlalchemy.orm import sessionmaker
 from config import DATABASE_URL
 
 Base = declarative_base()
-engine = create_engine(DATABASE_URL, echo=False)
-SessionLocal = sessionmaker(bind=engine)
+engine = create_engine(
+    config.DATABASE_URL,
+    connect_args={"check_same_thread": False},  # для SQLite
+    echo=False
+)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 class User(Base):
     __tablename__ = 'users'
