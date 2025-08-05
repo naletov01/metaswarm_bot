@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request, HTTPException
 from telegram import Update, BotCommand
 from sqlalchemy.orm import Session
 from typing import Generator
+from db import engine, Base
 
 import config
 import handlers
