@@ -4,7 +4,6 @@ from sqlalchemy.orm import sessionmaker
 from config import DATABASE_URL
 from sqlalchemy.orm import Session
 from typing import Generator
-from models import User
 
 Base = declarative_base()
 SessionLocal = sessionmaker(autoflush=False, autocommit=False)
@@ -30,12 +29,3 @@ def get_db() -> Generator[Session, None, None]:
         raise                       # 2. Пробрасываем дальше
     finally:
         db.close()                  # 3. Всегда закрываем
-
-
-# — Получить или создать профиль
-def get_user(db: Session, user_id: int) -> User:
-    user = db.query(User).filter(User.user_id == user_id).first()
-    if not user:
-        user = User(user_id=user_id)
-        db.add(user); db.commit(); db.refresh(user)
-    return user
