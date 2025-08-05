@@ -36,7 +36,6 @@ from config import (
     user_limits,
     CHANNEL_USERNAME,
     CHANNEL_LINK,
-    replicate_client,
     ADMIN_IDS
 )
 # ─────────────────────────────────────────────────────────────────────────────
@@ -183,7 +182,7 @@ def generate_and_send_video(user_id):
         # Вызов нужной модели
         if model == "kling-standard":
             logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
-            output = replicate_client.run(
+            output = replicate.run(
                 "kwaivgi/kling-v2.1",
                 input={
                     "mode": "standard",
@@ -195,7 +194,7 @@ def generate_and_send_video(user_id):
             )
         elif model == "kling-pro":
             logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
-            output = replicate_client.run(
+            output = replicate.run(
                 "kwaivgi/kling-v2.1",
                 input={
                     "mode": "pro",
@@ -207,7 +206,7 @@ def generate_and_send_video(user_id):
             )
         elif model == "kling-master":
             logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
-            output = replicate_client.run(
+            output = replicate.run(
                 "kwaivgi/kling-v2.1-master",
                 input={
                     "prompt": f"{POSITIVE_PROMPT}, {prompt}",
@@ -219,7 +218,7 @@ def generate_and_send_video(user_id):
             )
         elif model == "veo":
             logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
-            output = replicate_client.run(
+            output = replicate.run(
                 "google/veo-3-fast",
                 input={"prompt": prompt}
             )
