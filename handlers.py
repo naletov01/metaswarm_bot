@@ -324,9 +324,11 @@ def queued_generate_and_send_video(user_id):
 
 # ——— Хендлеры ———
 def start(update: Update, context: CallbackContext):
+    from main import SessionLocal, User
+    
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
-
+    
     # --- добавляем пользователя в базу при первом запуске ---
     db = SessionLocal()
     user = db.query(User).filter_by(user_id=user_id).first()
