@@ -284,6 +284,10 @@ def render_menu(menu_key: str, user_id: int) -> (str, InlineKeyboardMarkup):
     Подставляет замок '🔒' перед пунктами Генерации,
     если у пользователя нет премиум-подписки.
     """
+    if menu_key == CB_PROFILE:
+        # get_profile_text возвращает (text, InlineKeyboardMarkup)
+        return get_profile_text(user_id)
+        
     m = MENUS[menu_key]
     has_premium = (user_id in ADMIN_IDS) or (config.user_limits.get(user_id, 0) > 0)  # <- пример проверки
     buttons = []
