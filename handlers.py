@@ -266,13 +266,10 @@ def generate_and_send_video(user_id):
                     filename="video.mp4"
                 )
 
-            # 3) отправляем inline-меню «Сделать ещё видео»
-            text, markup = render_menu(CB_GENERATION, user_id)
+            # 3) просто отправляем текст без меню
             bot.send_message(
                 chat_id=user_id,
-                text="Сделаем ещё видео? 🥹",
-                reply_markup=markup,
-                parse_mode="HTML"
+                text="Сделаем ещё видео?🥹 Просто загрузи фото и напиши новый промпт."
             )
 
         except Exception as e:
