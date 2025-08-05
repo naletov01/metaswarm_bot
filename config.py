@@ -94,7 +94,7 @@ REFERRAL_BONUS_PER_5 = 150   # за каждые 5 приглашённых
 MAX_INVITES         = 10     # максимум друзей
 
 # ORM / БД
-DATABASE_URL = 'sqlite:///bot.db'
+DATABASE_URL = "sqlite:///./bot.db"
 # ─────────────────────────────────────────────────────────────────────────────
 
 
