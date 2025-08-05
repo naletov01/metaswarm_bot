@@ -5,8 +5,7 @@ import config
 from config import ADMIN_IDS
 from config import COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO, MAX_INVITES
 from typing import Tuple
-from handlers import get_user
-from db     import SessionLocal
+from db     import SessionLocal, get_user
 
 # ——— CALLBACK_DATA КОНСТАНТЫ ———
 CB_MAIN            = "menu:main"
