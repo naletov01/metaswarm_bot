@@ -1,5 +1,6 @@
 # test_db.py
-from db import SessionLocal, User
+from db import SessionLocal 
+from models import User
 
 db = SessionLocal()
 # 1) добавляем тестового юзера
