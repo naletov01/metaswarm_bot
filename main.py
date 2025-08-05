@@ -130,6 +130,7 @@ async def telegram_webhook(request: Request, db=Depends(get_db)):
 
 
 @app.get("/")
+@app.head("/")
 def root():
     return {"status": "Bot is running"}
 
