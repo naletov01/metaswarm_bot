@@ -33,8 +33,7 @@ from config import (
     CHANNEL_USERNAME,
     CHANNEL_LINK,
     replicate_client,
-    ADMIN_IDS,
-    DEFAULT_CREDITS
+    ADMIN_IDS
 )
 # ─────────────────────────────────────────────────────────────────────────────
 from datetime import datetime, timedelta
