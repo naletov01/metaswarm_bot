@@ -19,6 +19,8 @@ BOT_TOKEN           = os.getenv("BOT_TOKEN")
 WEBHOOK_SECRET      = os.getenv("WEBHOOK_SECRET")
 WEBHOOK_PATH        = f"/webhook/{WEBHOOK_SECRET}"
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./bot.db")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://metaswarm-bot.onrender.com")
 
 # ——— Обязательная подписка ———
 CHANNEL_LINK     = "https://t.me/metaswarm_01"  
@@ -92,9 +94,6 @@ PACKAGE_OPTIONS = {
 # Реферальная программа
 REFERRAL_BONUS_PER_5 = 150   # за каждые 5 приглашённых
 MAX_INVITES         = 10     # максимум друзей
-
-# ORM / БД
-DATABASE_URL = "sqlite:///./bot.db"
 # ─────────────────────────────────────────────────────────────────────────────
 
 
