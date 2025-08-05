@@ -46,14 +46,6 @@ from config import (
 )
 
 
-# — Получить или создать профиль
-def get_user(db: Session, user_id: int) -> User:
-    user = db.query(User).filter(User.user_id == user_id).first()
-    if not user:
-        user = User(user_id=user_id)
-        db.add(user); db.commit(); db.refresh(user)
-    return user
-
 
 # — Проверка и списание кредитов; возвращает (ok, message)
 def charge_credits(user: 'User', model_key: str, db: Session):
