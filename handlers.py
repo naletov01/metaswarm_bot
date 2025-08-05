@@ -33,7 +33,8 @@ from config import (
     CHANNEL_USERNAME,
     CHANNEL_LINK,
     replicate_client,
-    ADMIN_IDS
+    ADMIN_IDS,
+    DEFAULT_CREDITS
 )
 # ─────────────────────────────────────────────────────────────────────────────
 from datetime import datetime, timedelta
@@ -330,14 +331,14 @@ def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     
     # --- добавляем пользователя в базу при первом запуске ---
-    db = SessionLocal()
-    user = db.query(User).filter_by(user_id=user_id).first()
-    if not user:
-        user = User(user_id=user_id, credits=0)
-        db.add(user)
-        db.commit()
-        logger.info(f"Добавлен новый пользователь: {user_id}")
-    db.close()
+    try:
+        with SessionLocal() as db:
+            # get_user внутри сам делает add+commit, если нужно
+            get_user(db, user_id)
+    except Exception as e:
+        logger.error(f"[{user_id}] Ошибка работы с БД: {e}")
+        update.message.reply_text("❌ Внутренняя ошибка, попробуйте позже.")
+        return
     # ---------------------------------------------------------
 
     # 1) проверяем подписку — если не подписан, выходим и показываем промпт
