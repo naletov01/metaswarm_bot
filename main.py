@@ -17,7 +17,6 @@ from telegram.ext import (
 )
 
 from menu import CB_MAIN
-from config import bot, WEBHOOK_PATH
 from handlers import (
     start, image_upload_handler, text_handler, menu_callback, 
     on_check_sub, choose_model, profile, partner)
@@ -28,7 +27,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from config import DATABASE_URL
 
 Base = declarative_base()
 engine = create_engine(
@@ -57,9 +55,9 @@ def init_db():
 init_db()
 # ─────────────────────────────────────────────────────────────────────────────
 
-# # подтягиваем Bot и путь вебхука из config
-# bot = config.bot
-# WEBHOOK_PATH = config.WEBHOOK_PATH
+# подтягиваем Bot и путь вебхука из config
+bot = config.bot
+WEBHOOK_PATH = config.WEBHOOK_PATH
 
 # ——— Настройка логирования ———
 logging.basicConfig(
