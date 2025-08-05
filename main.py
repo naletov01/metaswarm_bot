@@ -6,6 +6,8 @@ from fastapi import Depends
 from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from telegram import Update, BotCommand
+from sqlalchemy.orm import Session
+from typing import Generator
 
 import config
 import handlers
@@ -66,12 +68,16 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-def get_db():
+def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
         yield db
+        # тут обычно не коммитим — коммитятся внутри endpoint’ов
+    except Exception:
+        db.rollback()               # 1. Откатываем при ошибке
+        raise                       # 2. Пробрасываем дальше
     finally:
-        db.close()
+        db.close()                  # 3. Всегда закрываем
 
 app = FastAPI()
 
