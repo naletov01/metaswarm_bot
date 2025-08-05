@@ -246,35 +246,34 @@ def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
     from handlers import get_user
     from main     import SessionLocal
     
-    db = SessionLocal()
-    user = get_user(db, user_id)
+    with SessionLocal() as db:
+        user = get_user(db, user_id)
     
-    c = user.credits + user.bonus_credits
-    lines = [
-        "👤 <b>Ваш профиль</b>\n",
-        f"Кредитов осталось: {c}\n",
-        "Генераций осталось:",
-        f"→ Kling Standard: {c // COST_KLING_STD}",
-        f"→ Kling Pro:      {c // COST_KLING_PRO}",
-        f"→ Kling Master:   {c // COST_KLING_MAST}",
-        f"→ Veo3:           {c // COST_VEO}\n",
-        f"Приглашённых друзей: {user.invited_count}/{MAX_INVITES}",
-        f"Бесплатных генераций (бонус): {user.bonus_credits}\n",
-        f"Подписка Premium: {'Активна ✅' if user.premium else 'Не активна ❌'}"
-    ]
-    if user.premium and user.premium_until:
-          lines.append(f"∙ Срок истечения: {user.premium_until.strftime('%Y-%m-%d')}")
-    lines.append("\n💡 Если генерации закончились — их всегда можно докупить!")
-    
-    keyboard = InlineKeyboardMarkup([
-    [InlineKeyboardButton("🔥 Купить подписку",    callback_data=CB_SUB_PREMIUM)],
-    [InlineKeyboardButton("💳 Купить кредиты",     callback_data=CB_BUY_CREDITS)],
-    [InlineKeyboardButton("🆓 Бесплатные генерации", callback_data=CB_FREE_GEN)],
-    [InlineKeyboardButton("⬅️ Назад",               callback_data=CB_MAIN)],
-    ])
-
-    db.close()
-    return "\n".join(lines), keyboard
+        c = user.credits + user.bonus_credits
+        lines = [
+            "👤 <b>Ваш профиль</b>\n",
+            f"Кредитов осталось: {c}\n",
+            "Генераций осталось:",
+            f"→ Kling Standard: {c // COST_KLING_STD}",
+            f"→ Kling Pro:      {c // COST_KLING_PRO}",
+            f"→ Kling Master:   {c // COST_KLING_MAST}",
+            f"→ Veo3:           {c // COST_VEO}\n",
+            f"Приглашённых друзей: {user.invited_count}/{MAX_INVITES}",
+            f"Бесплатных генераций (бонус): {user.bonus_credits}\n",
+            f"Подписка Premium: {'Активна ✅' if user.premium else 'Не активна ❌'}"
+        ]
+        if user.premium and user.premium_until:
+              lines.append(f"∙ Срок истечения: {user.premium_until.strftime('%Y-%m-%d')}")
+        lines.append("\n💡 Если генерации закончились — их всегда можно докупить!")
+        
+        keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔥 Купить подписку",    callback_data=CB_SUB_PREMIUM)],
+        [InlineKeyboardButton("💳 Купить кредиты",     callback_data=CB_BUY_CREDITS)],
+        [InlineKeyboardButton("🆓 Бесплатные генерации", callback_data=CB_FREE_GEN)],
+        [InlineKeyboardButton("⬅️ Назад",               callback_data=CB_MAIN)],
+        ])
+        
+        return "\n".join(lines), keyboard
 
 
 # ——— ФУНКЦИЯ ОТРИСОВКИ МЕНЮ ———
