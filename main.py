@@ -1,6 +1,7 @@
 # main.py 
 
 import logging
+from fastapi import Depends
 from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from telegram import Update, BotCommand
@@ -54,10 +55,16 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 # При старте приложения:
+@app.on_event("startup")
 def init_db():
     Base.metadata.create_all(bind=engine)
 
-init_db()
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 # ─────────────────────────────────────────────────────────────────────────────
 
 # подтягиваем Bot и путь вебхука из config
@@ -98,7 +105,7 @@ dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
 
 # ——— Webhook endpoint ———
 @app.post(WEBHOOK_PATH)
-async def telegram_webhook(request: Request):
+async def telegram_webhook(request: Request, db=Depends(get_db)):
     try:
         data = await request.json()
     except Exception:
