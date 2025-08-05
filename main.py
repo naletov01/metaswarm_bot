@@ -1,6 +1,7 @@
 # main.py 
 
 import logging
+from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from telegram import Update, BotCommand
 
@@ -46,18 +47,25 @@ class User(Base):
     premium_until   = Column(DateTime, nullable=True)
     invited_count   = Column(Integer, default=0, nullable=False)
     bonus_credits   = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 # При старте приложения:
 def init_db():
     Base.metadata.create_all(bind=engine)
+
+init_db()
 # ─────────────────────────────────────────────────────────────────────────────
 
-# подтягиваем Bot и путь вебхука из config
-bot = config.bot
-WEBHOOK_PATH = config.WEBHOOK_PATH
+# # подтягиваем Bot и путь вебхука из config
+# bot = config.bot
+# WEBHOOK_PATH = config.WEBHOOK_PATH
 
 # ——— Настройка логирования ———
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
@@ -83,10 +91,6 @@ dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
 dp.add_handler(MessageHandler(Filters.photo | (Filters.document & Filters.document.mime_type("image/")), image_upload_handler))
 dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
 
-
-if __name__ == '__main__':
-    init_db()
-    # … ваш код по запуску Updater и т.д.
 
 
 # ——— Webhook endpoint ———
