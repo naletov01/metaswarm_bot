@@ -27,7 +27,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import Session
 
 # ——— Настройка логирования ———
 logging.basicConfig(
@@ -134,11 +133,6 @@ async def telegram_webhook(request: Request, db=Depends(get_db)):
 @app.head("/")
 def root():
     return {"status": "Bot is running"}
-
-@app.get("/debug/users")
-def debug_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    return [{"user_id": u.user_id, "credits": u.credits} for u in users]
 
 
 
