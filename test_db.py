@@ -1,5 +1,5 @@
 # test_db.py
-from main import SessionLocal, User
+from db import SessionLocal, User
 
 db = SessionLocal()
 # 1) добавляем тестового юзера
