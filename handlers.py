@@ -44,14 +44,10 @@ from config import (
     COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO,
     SUB_CREDITS, SUB_PERIOD_DAYS
 )
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from main import User
 
 
 # — Получить или создать профиль
-def get_user(db: Session, user_id: int) -> 'User':
-    from main import User
+def get_user(db: Session, user_id: int) -> User:
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         user = User(user_id=user_id)
