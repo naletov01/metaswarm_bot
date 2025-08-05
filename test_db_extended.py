@@ -1,6 +1,7 @@
 # test_db_extended.py
 from datetime import datetime, timedelta
-from main import SessionLocal, User
+from db import SessionLocal 
+from models import User
 
 db = SessionLocal()
 
