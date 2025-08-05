@@ -1,0 +1,13 @@
+from db import SessionLocal
+from models import User
+import logging
+
+logger = logging.getLogger(__name__)
+
+# — Получить или создать профиль
+def get_user(db: Session, user_id: int) -> User:
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if not user:
+        user = User(user_id=user_id)
+        db.add(user); db.commit(); db.refresh(user)
+    return user
