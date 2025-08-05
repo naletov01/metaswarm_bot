@@ -70,8 +70,8 @@ def charge_credits(user: 'User', model_key: str, db: Session):
     total_available = user.credits + user.bonus_credits
     if total_available < cost:
         return False, (
-            f"Недостаточно кредитов для генерации: у вас {total_available}, нужно {cost}. "
-            f"Купите пакет или получите бонусные кредиты приглашая друзей"
+            f"⚠️ Недостаточно кредитов: у вас {total_available}, нужно {cost}. "
+            f"Купите пакет или получите бонусные кредиты приглашая друзей. "
             f"Подробности в профиле."
         )
     # списываем сначала из бонусов
