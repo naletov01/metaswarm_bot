@@ -380,13 +380,16 @@ def start(update: Update, context: CallbackContext):
             # 2.3) Если он только что пришёл и есть валидный реферер
             if is_new and referrer_id and referrer_id != user_id:
                 ref = db.query(User).filter_by(user_id=referrer_id).first()
-                if ref and ref.invited_count < MAX_INVITES:
-                    ref.invited_count += 1
-                    ref.bonus_credits += BONUS_PER_INVITE
-                    logger.info(
-                        f"[{referrer_id}] 💸 Пригласил {user_id}: "
-                        f"+{BONUS_PER_INVITE} бонусов (всего приглашённых: {ref.invited_count})"
-                    )
+                if ref: 
+                    if ref.invited_count < MAX_INVITES:
+                        ref.invited_count += 1
+                        ref.bonus_credits += BONUS_PER_INVITE
+                        logger.info(
+                            f"[{referrer_id}] 💸 Пригласил {user_id}: "
+                            f"+{BONUS_PER_INVITE} бонусов (всего приглашённых: {ref.invited_count})"
+                        )
+                    else:
+                        logger.info(f"[{referrer_id}] ⚠️ Достигнут лимит приглашений ({MAX_INVITES})")
 
             # 2.4) Окончательный коммит всех изменений
             db.commit()
