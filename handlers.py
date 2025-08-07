@@ -348,18 +348,15 @@ def start(update: Update, context: CallbackContext):
     
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
+    logger.info(f"[{user_id}] ▶️ start handler вызван, args={context.args}")
     
     # 1) Распарсить возможный payload (/start payload)
     payload = None
     if context.args:
-        # PTB-v13 с pass_args
         payload = context.args[0]
     else:
-        # fallback: разбираем текст команды
-        text = update.message.text or ""
-        parts = text.split(maxsplit=1)
-        if len(parts) == 2:
-            payload = parts[1]
+        parts = (update.message.text or "").split(maxsplit=1)
+        payload = parts[1] if len(parts) == 2 else None
 
     # 2) Из payload достаём реферер, если он в формате ref_<id>
     referrer_id = None
