@@ -361,12 +361,11 @@ def start(update: Update, context: CallbackContext):
 
     # 2) Из payload достаём реферер, если он в формате ref_<id>
     referrer_id = None
-    if payload and payload.startswith("ref_"):
-        raw = payload.split("_", 1)[1]
+    if payload and payload.isdigit():
         try:
-            referrer_id = int(raw)
+            referrer_id = int(payload)
         except ValueError:
-            logger.warning(f"[{user_id}] Некорректный аргумент реферера: {raw}")
+            logger.warning(f"[{user_id}] Не смогли конвертировать payload в int: {payload}")
 
     # 2) Работа с БД: создать пользователя и, если новый + валидный referrer, начислить бонус
     try:
