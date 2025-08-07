@@ -37,7 +37,9 @@ from config import (
     CHANNEL_USERNAME,
     CHANNEL_LINK,
     ADMIN_IDS,
-    COSTS
+    COSTS,
+    BONUS_PER_INVITE,
+    MAX_INVITES
 )
 # ─────────────────────────────────────────────────────────────────────────────
 from datetime import datetime, timedelta
@@ -347,20 +349,43 @@ def start(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
     
-    # --- добавляем пользователя в базу при первом запуске ---
+    # 1) Распарсить возможный referrer_id из аргументов
+    referrer_id = None
+    if context.args:
+        raw = context.args[0]
+        try:
+            referrer_id = int(raw)
+        except ValueError:
+            logger.warning(f"[{user_id}] Некорректный аргумент реферера: {raw}")
+
+    # 2) Работа с БД: создать пользователя и, если новый + валидный referrer, начислить бонус
     try:
         with SessionLocal() as db:
-            get_user(db, user_id)
-            try:
-                db.commit()
-            except Exception:
-                db.rollback()
-                raise
-    except Exception as e:
-        logger.error(f"[{user_id}] Ошибка работы с БД: {e}")
+            # 2.1) Узнать, был ли пользователь уже в базе
+            existing = db.query(User).filter_by(user_id=user_id).first()
+            is_new = existing is None
+
+            # 2.2) Получить или создать пользователя
+            user = get_user(db, user_id)
+
+            # 2.3) Если он только что пришёл и есть валидный реферер
+            if is_new and referrer_id and referrer_id != user_id:
+                ref = db.query(User).filter_by(user_id=referrer_id).first()
+                if ref and ref.invited_count < MAX_INVITES:
+                    ref.invited_count += 1
+                    ref.bonus_credits += BONUS_PER_INVITE
+                    logger.info(
+                        f"[{referrer_id}] 💸 Пригласил {user_id}: "
+                        f"+{BONUS_PER_INVITE} бонусов (всего приглашённых: {ref.invited_count})"
+                    )
+
+            # 2.4) Окончательный коммит всех изменений
+            db.commit()
+
+    except SQLAlchemyError as e:
+        logger.error(f"[{user_id}] Ошибка работы с БД в start", exc_info=True)
         update.message.reply_text("❌ Внутренняя ошибка, попробуйте позже.")
         return
-    # ---------------------------------------------------------
 
     # 1) проверяем подписку — если не подписан, выходим и показываем промпт
     if not check_subscription(user_id):
@@ -370,11 +395,8 @@ def start(update: Update, context: CallbackContext):
     text, markup = render_menu(CB_MAIN, user_id)
 
     # 3) шлём его как HTML (чтобы теги <b> работали)
-    update.message.reply_text(
-        text,
-        reply_markup=markup,
-        parse_mode="HTML"
-    )
+    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
+    
 
 # 2) Привязываем каждый «гл. пункт» к командам:
 # /choose_model → Генерация
