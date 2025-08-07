@@ -73,7 +73,7 @@ bot.set_my_commands([
 ])
 
 # ——— Регистрация хендлеров ———
-dp.add_handler(CommandHandler("start",        start))
+dp.add_handler(CommandHandler("start", start, pass_args=True))
 dp.add_handler(CommandHandler("choose_model", choose_model))
 dp.add_handler(CommandHandler("profile",      profile))
 # dp.add_handler(CommandHandler("info",         info))
