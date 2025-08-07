@@ -42,6 +42,7 @@ from config import (
 # ─────────────────────────────────────────────────────────────────────────────
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from config import (
     COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO,
     SUB_CREDITS, SUB_PERIOD_DAYS
@@ -100,6 +101,29 @@ def apply_subscription(user: 'User', sub_type: str, db: Session):
         raise
 # ─────────────────────────────────────────────────────────────────────────────
 
+
+def refund_credits(user_id: int, amount: int) -> bool:
+    """
+    Возвращает True, если возврат прошёл успешно, иначе False.
+    """
+    try:
+        with SessionLocal() as db:
+            user = get_user(db, user_id)
+            user.credits = (user.credits or 0) + amount
+            db.commit()
+        logger.info(f"[{user_id}] 🔄 Refund successful: +{amount} credits")
+        return True
+    except SQLAlchemyError as e:
+        # Откатит автоматически при выходе из with, но на всякий случай:
+        try:
+            db.rollback()
+        except:
+            pass
+        logger.exception(f"[{user_id}] ❌ Refund failed ({amount} credits): {e}")
+        return False
+    except Exception as e:
+        logger.exception(f"[{user_id}] ❌ Unexpected error in refund_credits: {e}")
+        return False
 
 
 def _keep_upload_action(bot, chat_id, stop_event):
@@ -294,8 +318,9 @@ def generate_and_send_video(user_id):
         user_limits[user_id] += 1
 
     except Exception:
-        logger.exception(f"[{user_id}] ❌ Video generation error — остановим индикатор")
+        logger.exception(f"[{user_id}] ❌ Video generation error")
         stop_event.set()
+        refund_credits(user_id, COSTS[model])
         bot.send_message(chat_id=user_id, text="❌ Ошибка генерации видео. Попробуйте позже.")
 
     finally:
