@@ -36,7 +36,8 @@ from config import (
     user_limits,
     CHANNEL_USERNAME,
     CHANNEL_LINK,
-    ADMIN_IDS
+    ADMIN_IDS,
+    COSTS
 )
 # ─────────────────────────────────────────────────────────────────────────────
 from datetime import datetime, timedelta
@@ -49,29 +50,31 @@ from config import (
 
 
 # — Проверка и списание кредитов; возвращает (ok, message)
-def charge_credits(user: 'User', model_key: str, db: Session):
-    cost_map = {
-        'kling-standard': COST_KLING_STD,
-        'kling-pro':      COST_KLING_PRO,
-        'kling-master':   COST_KLING_MAST,
-        'veo':            COST_VEO,
-    }
-    cost = cost_map[model_key]
-    total_available = user.credits + user.bonus_credits
-    if total_available < cost:
+def charge_credits(user: User, model_key: str, db: Session) -> Tuple[bool, Optional[str]]:
+    """
+    Списывает credits сначала с bonus_credits, затем с credits.
+    Не делает commit — сохраняет ответственность за commit вызывающему коду.
+    """
+    cost = COSTS.get(model_key)
+    if cost is None:
+        return False, "Неподдерживаемый режим генерации."
+
+    total = user.credits + user.bonus_credits
+    if total < cost:
         return False, (
-            f"⚠️ Недостаточно кредитов: у вас {total_available}, нужно {cost}. "
-            f"Купите пакет или получите бонусные кредиты приглашая друзей. "
-            f"Подробности в профиле."
+            f"⚠️ Недостаточно кредитов: у вас {total}, нужно {cost}. "
+            "Купите пакет или получите бонусные кредиты приглашая друзей. "
+            "Подробности — в профиле."
         )
-    # списываем сначала из бонусов
+
+    # списываем бонусные сначала
     if user.bonus_credits >= cost:
         user.bonus_credits -= cost
     else:
-        remaining = cost - user.bonus_credits
+        remain = cost - user.bonus_credits
         user.bonus_credits = 0
-        user.credits -= remaining
-    db.commit()
+        user.credits -= remain
+
     return True, None
 
 
@@ -144,14 +147,14 @@ def generate_and_send_video(user_id):
     # ───── ВСТАВКА: Списание кредитов ─────
     with SessionLocal() as db:
         user = get_user(db, user_id)
-        ok, errmsg = charge_credits(user, model, db)
+        ok, err = charge_credits(user, model_key, db)
         if not ok:
-            bot.send_message(
-                chat_id=user_id,
-                text=errmsg,
-                parse_mode="HTML"
-            )
-            return
+            return bot.send_message(chat_id, err, parse_mode="HTML")
+        try:
+            db.commit()
+        except:
+            db.rollback()
+            raise
     # ──── /КОНЕЦ вставки┄────
     
     # запускаем фоновой поток, который шлёт «upload_video» раз в 10 сек
