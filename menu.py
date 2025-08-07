@@ -139,7 +139,7 @@ MENUS = {
         "buttons": [
             [ InlineKeyboardButton("💰 3 дня | 1 $",      callback_data=CB_SUB_3D) ],
             [ InlineKeyboardButton("🔥 Месяц | 10 $",     callback_data=CB_SUB_MONTH) ],
-            [ InlineKeyboardButton("💎 Год | 65 $", callback_data=CB_SUB_YEAR) ],
+            [ InlineKeyboardButton("💎 Год | 85 $", callback_data=CB_SUB_YEAR) ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_PROFILE) ],
         ],
     },
@@ -206,8 +206,8 @@ MENUS = {
         ),
         "buttons": [
             [ InlineKeyboardButton("TG Stars | 3500 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe | 65 $", url="https://example.com") ],
-            [ InlineKeyboardButton("Crypto | 65 $", url="https://example.com") ],
+            [ InlineKeyboardButton("Stripe | 85 $", url="https://example.com") ],
+            [ InlineKeyboardButton("Crypto | 85 $", url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_SUB_PREMIUM) ],
         ],
     },
