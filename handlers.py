@@ -168,7 +168,7 @@ def generate_and_send_video(user_id):
         target=_keep_upload_action,
         args=(bot, user_id, stop_event),
     daemon=True
-).start()
+    ).start()
 
     try:
         logger.info(f"Start video generation: model={model}, prompt={prompt}")
@@ -294,7 +294,8 @@ def generate_and_send_video(user_id):
         user_limits[user_id] += 1
 
     except Exception:
-        logger.exception("Video generation error")
+        logger.exception(f"[{user_id}] ❌ Video generation error — остановим индикатор")
+        stop_event.set()
         bot.send_message(chat_id=user_id, text="❌ Ошибка генерации видео. Попробуйте позже.")
 
     finally:
