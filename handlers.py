@@ -60,7 +60,7 @@ def charge_credits(user: User, model_key: str, db: Session) -> Tuple[bool, Optio
     if cost is None:
         return False, "Неподдерживаемый режим генерации."
 
-    total = user.credits + user.bonus_credits
+    total = (user.credits or 0) + (user.bonus_credits or 0)
     if total < cost:
         return False, (
             f"⚠️ Недостаточно кредитов: у вас {total}, нужно {cost}. "
@@ -69,12 +69,12 @@ def charge_credits(user: User, model_key: str, db: Session) -> Tuple[bool, Optio
         )
 
     # списываем бонусные сначала
-    if user.bonus_credits >= cost:
-        user.bonus_credits -= cost
+    if (user.bonus_credits or 0) >= cost:
+        user.bonus_credits = (user.bonus_credits or 0) - cost
     else:
-        remain = cost - user.bonus_credits
+        remain = cost - (user.bonus_credits or 0)
         user.bonus_credits = 0
-        user.credits -= remain
+        user.credits = (user.credits or 0) - remain
 
     return True, None
 
