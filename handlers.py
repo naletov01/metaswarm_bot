@@ -93,7 +93,11 @@ def apply_subscription(user: 'User', sub_type: str, db: Session):
     user.subscription_type = sub_type
     user.premium_until = start + timedelta(days=days)
     user.credits += add_credits
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -148,7 +152,7 @@ def generate_and_send_video(user_id):
     # ───── ВСТАВКА: Списание кредитов ─────
     with SessionLocal() as db:
         user = get_user(db, user_id)
-        ok, err = charge_credits(user, model_key, db)
+        ok, err = charge_credits(user, model, db)
         if not ok:
             return bot.send_message(chat_id, err, parse_mode="HTML")
         try:
