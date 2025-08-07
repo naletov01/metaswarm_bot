@@ -10,5 +10,5 @@ def get_user(db: Session, user_id: int) -> User:
     user = db.query(User).filter(User.user_id == user_id).first()
     if not user:
         user = User(user_id=user_id)
-        db.add(user); db.commit(); db.refresh(user)
+        db.add(user)
     return user
