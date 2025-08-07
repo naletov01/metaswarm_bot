@@ -153,7 +153,7 @@ def generate_and_send_video(user_id):
             return bot.send_message(chat_id, err, parse_mode="HTML")
         try:
             db.commit()
-        except:
+        except Exception:
             db.rollback()
             raise
     # ──── /КОНЕЦ вставки┄────
@@ -320,8 +320,12 @@ def start(update: Update, context: CallbackContext):
     # --- добавляем пользователя в базу при первом запуске ---
     try:
         with SessionLocal() as db:
-            # get_user внутри сам делает add+commit, если нужно
             get_user(db, user_id)
+            try:
+                db.commit()
+            except Exception:
+                db.rollback()
+                raise
     except Exception as e:
         logger.error(f"[{user_id}] Ошибка работы с БД: {e}")
         update.message.reply_text("❌ Внутренняя ошибка, попробуйте позже.")
