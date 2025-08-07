@@ -349,10 +349,22 @@ def start(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
     
-    # 1) Распарсить возможный referrer_id из аргументов
-    referrer_id = None
+    # 1) Распарсить возможный payload (/start payload)
+    payload = None
     if context.args:
-        raw = context.args[0]
+        # PTB-v13 с pass_args
+        payload = context.args[0]
+    else:
+        # fallback: разбираем текст команды
+        text = update.message.text or ""
+        parts = text.split(maxsplit=1)
+        if len(parts) == 2:
+            payload = parts[1]
+
+    # 2) Из payload достаём реферер, если он в формате ref_<id>
+    referrer_id = None
+    if payload and payload.startswith("ref_"):
+        raw = payload.split("_", 1)[1]
         try:
             referrer_id = int(raw)
         except ValueError:
