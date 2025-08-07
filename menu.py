@@ -112,7 +112,7 @@ MENUS = {
             "→ Добавляйте в описание свою реферальную ссылку\n"
             "→ За каждую оплату подписки по вашей ссылке вы получаете <b>35%</b> от суммы\n\n"
             "Ваша персональная реферальная ссылка:\n"
-            "https://t.me/metaswarm_bot?start={{{{user_id}}}}"
+            "https://t.me/metaswarm_bot?start={{user_id}}"
         ),
         "buttons": [
             [ InlineKeyboardButton("⬅️ Назад",              callback_data=CB_MAIN) ],
@@ -164,7 +164,7 @@ MENUS = {
             "→ За каждых 5 приглашённых друзей вы получаете 1 бесплатную генерацию видео\n"
             "→ Максимум можно пригласить 10 друзей (и получить до 3 бесплатных генераций)\n\n"
             "Ваша реферальная ссылка:\n"
-            "https://t.me/metaswarm_bot?start={{{{user_id}}}}"
+            "https://t.me/metaswarm_bot?start={{user_id}}"
         ),
         "buttons": [
             [ InlineKeyboardButton("⬅️ Назад", callback_data=CB_PROFILE) ],
