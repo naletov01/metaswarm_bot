@@ -11,5 +11,6 @@ class User(Base):
     premium_until   = Column(DateTime, nullable=True)
     invited_count   = Column(Integer, default=0, nullable=False)
     bonus_credits   = Column(Integer, default=0, nullable=False)
+    referrer_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
