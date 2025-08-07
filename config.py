@@ -93,7 +93,7 @@ PACKAGE_OPTIONS = {
 
 # Реферальная программа
 BONUS_PER_INVITE = 30   # за каждые 5 приглашённых
-MAX_INVITES          = 10     # максимум друзей
+MAX_INVITES      = 1     # максимум друзей
 
 COSTS = {
     'kling-standard': COST_KLING_STD,
