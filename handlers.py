@@ -348,35 +348,49 @@ def start(update: Update, context: CallbackContext):
     
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
+    logger.info(f"[{user_id}] ▶️ start handler вызван, args={context.args}")
     
-    # --- добавляем пользователя в базу при первом запуске ---
+    # 1) Распарсить возможный payload (/start payload)
+    payload = None
+    args = getattr(context, "args", [])
+    if context.args:
+        payload = context.args[0]
+    else:
+        parts = (update.message.text or "").split(maxsplit=1)
+        payload = parts[1] if len(parts) == 2 else None
+
+    # 2) Из payload достаём реферер, если он в формате ref_<id>
+    referrer_id = None
+    if payload and payload.startswith("ref_"):
+        raw = payload.split("_", 1)[1]
+        try:
+            referrer_id = int(raw)
+        except ValueError:
+            logger.warning(f"[{user_id}] Некорректный аргумент реферера: {raw}")
+
+    # 2) Работа с БД: создать пользователя и, если новый + валидный referrer, начислить бонус
     try:
         with SessionLocal() as db:
-            get_user(db, user_id)
-            try:
-                db.commit()
-            except Exception:
-                db.rollback()
-                raise
-    except Exception as e:
-        logger.error(f"[{user_id}] Ошибка работы с БД: {e}")
-        update.message.reply_text("❌ Внутренняя ошибка, попробуйте позже.")
-        return
-    # ---------------------------------------------------------
+            # 2.1) Узнать, был ли пользователь уже в базе
+            existing = db.query(User).filter_by(user_id=user_id).first()
+            is_new = existing is None
 
-    # 1) проверяем подписку — если не подписан, выходим и показываем промпт
-    if not check_subscription(user_id):
-        return send_subscribe_prompt(chat_id)
+            # 2.2) Получить или создать пользователя
+            user = get_user(db, user_id)
 
-    # 2) если подписан — рендерим главное меню через menu.render_menu
-    text, markup = render_menu(CB_MAIN, user_id)
+            # 2.3) Если он только что пришёл и есть валидный реферер
+            if is_new and referrer_id and referrer_id != user_id:
+                ref = db.query(User).filter_by(user_id=referrer_id).first()
+                if ref and ref.invited_count < MAX_INVITES:
+                    ref.invited_count += 1
+                    ref.bonus_credits += BONUS_PER_INVITE
+                    logger.info(
+                        f"[{referrer_id}] 💸 Пригласил {user_id}: "
+                        f"+{BONUS_PER_INVITE} бонусов (всего приглашённых: {ref.invited_count})"
+                    )
 
-    # 3) шлём его как HTML (чтобы теги <b> работали)
-    update.message.reply_text(
-        text,
-        reply_markup=markup,
-        parse_mode="HTML"
-    )
+            # 2.4) Окончательный коммит всех изменений
+            db.commit()
     
 
 # 2) Привязываем каждый «гл. пункт» к командам:
