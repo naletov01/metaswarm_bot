@@ -46,6 +46,7 @@ from config import (
     COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO,
     SUB_CREDITS, SUB_PERIOD_DAYS
 )
+from typing import Tuple, Optional
 
 
 
