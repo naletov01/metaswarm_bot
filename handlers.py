@@ -352,6 +352,7 @@ def start(update: Update, context: CallbackContext):
     
     # 1) Распарсить возможный payload (/start payload)
     payload = None
+    args = getattr(context, "args", [])
     if context.args:
         payload = context.args[0]
     else:
