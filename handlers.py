@@ -550,7 +550,7 @@ def text_handler(update: Update, context: CallbackContext):
             data = user_data.setdefault(user_id, {})
             model = data.get("model")
             user = get_user(db, user_id)
-            ok, errmsg = charge_credits(user, model, db)
+            ok, errmsg = charge_credits(user, model_key, db)
             if not ok:
                 update.message.reply_text(errmsg, parse_mode="HTML")
                 return
