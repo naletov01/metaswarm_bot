@@ -380,7 +380,8 @@ def start(update: Update, context: CallbackContext):
             # 2.3) Если он только что пришёл и есть валидный реферер
             if is_new and referrer_id and referrer_id != user_id:
                 ref = db.query(User).filter_by(user_id=referrer_id).first()
-                if ref: 
+                if ref:
+                    user.referrer_id = referrer_id
                     if ref.invited_count < MAX_INVITES:
                         ref.invited_count += 1
                         ref.bonus_credits += BONUS_PER_INVITE
