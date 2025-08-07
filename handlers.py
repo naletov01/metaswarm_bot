@@ -391,6 +391,19 @@ def start(update: Update, context: CallbackContext):
 
             # 2.4) Окончательный коммит всех изменений
             db.commit()
+            
+    except SQLAlchemyError as e:
+        logger.error(f"[{user_id}] Ошибка работы с БД в start", exc_info=True)
+        update.message.reply_text("❌ Внутренняя ошибка, попробуйте позже.")
+        return
+
+    # 1) проверяем подписку — если не подписан, выходим и показываем промпт
+    if not check_subscription(user_id):
+        return send_subscribe_prompt(chat_id)
+
+    # 2) если подписан — рендерим главное меню через menu.render_menu
+    text, markup = render_menu(CB_MAIN, user_id)
+    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
     
 
 # 2) Привязываем каждый «гл. пункт» к командам:
