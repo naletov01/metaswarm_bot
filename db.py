@@ -15,7 +15,15 @@ if DATABASE_URL.startswith("sqlite://"):
         echo=False # временно тру, поменять на False
     )
 else:
-    engine = create_engine(DATABASE_URL, echo=False)
+    engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=280,
+    pool_size=5,
+    max_overflow=10,
+    echo=False,
+    future=True,
+    )
 SessionLocal.configure(bind=engine)
 
 
