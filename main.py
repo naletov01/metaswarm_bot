@@ -2,14 +2,12 @@
 
 import logging
 from anyio import to_thread
-from fastapi import Depends
-from datetime import datetime
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Depends
 from telegram import Update, BotCommand
 from sqlalchemy.orm import Session
-from typing import Generator
-from db import engine, Base
-from db import get_db
+from db import engine, Base, get_db
+# from datetime import datetime
+# from typing import Generator
 
 import config
 import handlers
@@ -25,12 +23,12 @@ from handlers import (
     start, image_upload_handler, text_handler, menu_callback, 
     on_check_sub, choose_model, profile, partner)
 
-# ─────────────────────────────────────────────────────────────────────────────
-from sqlalchemy import (
-    Column, Integer, Boolean, DateTime, String, create_engine
-)
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+# from sqlalchemy import (
+#     Column, Integer, Boolean, DateTime, String, create_engine
+# )
+# from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy.orm import sessionmaker
+
 
 # ——— Настройка логирования ———
 logging.basicConfig(
@@ -59,8 +57,6 @@ async def setup_webhook():
     if not result:
         logger.warning("Не удалось установить webhook")
 
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
 
@@ -68,7 +64,6 @@ bot.set_my_commands([
     BotCommand("start",        "🏠 Главное меню"),
     BotCommand("choose_model", "🎞 Генерация видео"),
     BotCommand("profile",      "👤 Профиль"),
-    # BotCommand("info",         "ℹ️ О генеративных моделях"),
     BotCommand("partner",      "🤑 Партнёрская программа"),
 ])
 
@@ -76,7 +71,6 @@ bot.set_my_commands([
 dp.add_handler(CommandHandler("start", start, pass_args=True))
 dp.add_handler(CommandHandler("choose_model", choose_model))
 dp.add_handler(CommandHandler("profile",      profile))
-# dp.add_handler(CommandHandler("info",         info))
 dp.add_handler(CommandHandler("partner",      partner))
 dp.add_handler(CallbackQueryHandler(menu_callback, pattern=r"^(menu:|gen:)"))
 dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
@@ -104,33 +98,5 @@ async def telegram_webhook(request: Request, db=Depends(get_db)):
 @app.head("/")
 def root():
     return {"status": "Bot is running"}
-
-
-# from fastapi import APIRouter, Depends
-# from sqlalchemy.orm import Session
-# from db import get_db  # твоя функция для получения сессии
-# from models import User  # твоя модель User
-
-# router = APIRouter()
-
-# @router.get("/debug/users")
-# def debug_users(db: Session = Depends(get_db)):
-#     users = db.query(User).all()
-#     return [
-#         {
-#             "user_id": u.user_id,
-#             "credits": u.credits,
-#             "invited_count": u.invited_count,
-#             "bonus_credits": u.bonus_credits,
-#             "referrer_id": u.referrer_id,
-#             "created_at": u.created_at,
-#             "updated_at": u.updated_at
-#         }
-#         for u in users
-#     ]
-
-
-
-
 
 
