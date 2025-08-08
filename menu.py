@@ -38,10 +38,10 @@ MODEL_MAP = {
     CB_GEN_VEO:        "veo",
 }
 
-# ——— ВСПОМОГАТЕЛЬ —————
-def _maybe_lock(text: str, has_premium: bool) -> str:
-    """Если нет премиум-подписки — добавляем эмоджи замка спереди."""
-    return ("🔒 " + text) if not has_premium else text
+# # ——— ВСПОМОГАТЕЛЬ —————
+# def _maybe_lock(text: str, has_premium: bool) -> str:
+#     """Если нет премиум-подписки — добавляем эмоджи замка спереди."""
+#     return ("🔒 " + text) if not has_premium else text
 
 
 # ——— ОПИСАНИЕ ВСЕХ МЕНЮ ———
@@ -86,18 +86,6 @@ MENUS = {
             [ InlineKeyboardButton("⬅️ Назад",              callback_data=CB_MAIN) ],
         ],
     },
-
-    # # Меню «О генеративных моделях»
-    # CB_INFO: {
-    #     "text": "ℹ️ <b>О генеративных моделях</b>\n\nКраткое описание доступных режимов:",
-    #     "buttons": [
-    #         [ InlineKeyboardButton("🎬 Kling Standart 🎬", callback_data=CB_GEN_KLING_STD) ],
-    #         [ InlineKeyboardButton("🎥 Kling Pro 🎥",       callback_data=CB_GEN_KLING_PRO) ],
-    #         [ InlineKeyboardButton("🏆 Kling Master 🏆",    callback_data=CB_GEN_KLING_MAST) ],
-    #         [ InlineKeyboardButton("🔥 Veo3 со звуком 🔥",  callback_data=CB_GEN_VEO) ],
-    #         [ InlineKeyboardButton("⬅️ Назад",              callback_data=CB_MAIN) ],
-    #     ],
-    # },
 
     # Меню «Партнёрская программа»
     CB_PARTNER: {
@@ -274,36 +262,55 @@ def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
 
 
 # ——— ФУНКЦИЯ ОТРИСОВКИ МЕНЮ ———
-def render_menu(menu_key: str, user_id: int) -> (str, InlineKeyboardMarkup):
+# def render_menu(menu_key: str, user_id: int) -> (str, InlineKeyboardMarkup):
+#     """
+#     Возвращает (text, InlineKeyboardMarkup) для указанного меню.
+#     Подставляет замок '🔒' перед пунктами Генерации,
+#     если у пользователя нет премиум-подписки.
+#     """
+#     if menu_key == CB_PROFILE:
+#         # get_profile_text возвращает (text, InlineKeyboardMarkup)
+#         return get_profile_text(user_id)
+        
+#     m = MENUS[menu_key]
+#     has_premium = (user_id in config.ADMIN_IDS) or (config.user_limits.get(user_id, 0) > 0)  # <- пример проверки
+#     buttons = []
+
+#     # если это меню Генерации — ставим замок
+#     if menu_key == CB_GENERATION:
+#         for row in m["buttons"]:
+#             orig_text = row[0].text
+#             cb        = row[0].callback_data
+#             if cb == CB_MAIN:
+#                 btn_text = orig_text
+#             else:
+#                 btn_text = _maybe_lock(orig_text, has_premium)
+#             buttons.append([InlineKeyboardButton(btn_text, callback_data=cb)])
+#     else:
+#         buttons = m["buttons"]
+
+#     markup = InlineKeyboardMarkup(buttons)
+#     # заменяем {{user_id}} в тексте на реальный ID
+#     text = m["text"].replace("{{user_id}}", str(user_id))
+#     text = text.replace("{bot_username}", config.bot.username)
+#     return text, markup
+
+def render_menu(menu_key: str, user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
     """
     Возвращает (text, InlineKeyboardMarkup) для указанного меню.
-    Подставляет замок '🔒' перед пунктами Генерации,
-    если у пользователя нет премиум-подписки.
     """
     if menu_key == CB_PROFILE:
-        # get_profile_text возвращает (text, InlineKeyboardMarkup)
         return get_profile_text(user_id)
-        
+
     m = MENUS[menu_key]
-    has_premium = (user_id in config.ADMIN_IDS) or (config.user_limits.get(user_id, 0) > 0)  # <- пример проверки
-    buttons = []
 
-    # если это меню Генерации — ставим замок
-    if menu_key == CB_GENERATION:
-        for row in m["buttons"]:
-            orig_text = row[0].text
-            cb        = row[0].callback_data
-            if cb == CB_MAIN:
-                btn_text = orig_text
-            else:
-                btn_text = _maybe_lock(orig_text, has_premium)
-            buttons.append([InlineKeyboardButton(btn_text, callback_data=cb)])
-    else:
-        buttons = m["buttons"]
-
+    buttons = m["buttons"]
     markup = InlineKeyboardMarkup(buttons)
-    # заменяем {{user_id}} в тексте на реальный ID
+
+    # Подставляем user_id и имя бота в текст
     text = m["text"].replace("{{user_id}}", str(user_id))
     text = text.replace("{bot_username}", config.bot.username)
+
     return text, markup
+
 
