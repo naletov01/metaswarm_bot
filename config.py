@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 from telegram import Bot
 from telegram.utils.request import Request as TelegramRequest
-import replicate
+# import replicate
 from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(level=logging.INFO)
