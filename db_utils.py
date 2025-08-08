@@ -1,4 +1,4 @@
-from db import SessionLocal
+# from db import SessionLocal
 from sqlalchemy.orm import Session
 from models import User
 import logging
@@ -11,4 +11,5 @@ def get_user(db: Session, user_id: int) -> User:
     if not user:
         user = User(user_id=user_id)
         db.add(user)#; db.commit(); db.refresh(user)
+        logger.info(f"[{user_id}] 👤 Новый пользователь добавлен в БД")
     return user
