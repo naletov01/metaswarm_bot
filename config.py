@@ -67,8 +67,8 @@ executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT)
 # Стоимость одной генерации
 COST_KLING_STD  = 100   # кредитов
 COST_KLING_PRO  = 150
-COST_KLING_MAST = 300
-COST_VEO        = 600
+COST_KLING_MAST = 400
+COST_VEO        = 650
 
 # Подписки: сколько кредитов и на какой срок (в днях)
 SUB_CREDITS   = {
