@@ -61,11 +61,9 @@ POSITIVE_PROMPT = (
 # 5) Спиннер-интервал
 MIN_INTERVAL = 5  # сек между сообщениями UPLOAD_VIDEO
 
-# replicate_client = replicate.Client(token=REPLICATE_API_TOKEN)
 executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Стоимость одной генерации
 COST_KLING_STD  = 100   # кредитов
 COST_KLING_PRO  = 150
@@ -93,7 +91,7 @@ PACKAGE_OPTIONS = {
 
 # Реферальная программа
 BONUS_PER_INVITE = 30   # за каждые 5 приглашённых
-MAX_INVITES      = 1     # максимум друзей
+MAX_INVITES      = 10     # максимум друзей
 
 COSTS = {
     'kling-standard': COST_KLING_STD,
@@ -101,7 +99,6 @@ COSTS = {
     'kling-master':   COST_KLING_MAST,
     'veo':            COST_VEO,
 }
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 if not all([BOT_TOKEN, WEBHOOK_SECRET, REPLICATE_API_TOKEN]):
