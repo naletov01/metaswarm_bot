@@ -111,7 +111,8 @@ def check_subscription(user_id: int) -> bool:
             chat_id=f"@{CHANNEL_USERNAME}", user_id=user_id
         ).status
         return status in ("member", "creator", "administrator")
-    except:
+    except Exception:
+        logger.exception(f"[{user_id}] check_subscription failed")
         return False
 
 def send_subscribe_prompt(chat_id: int):
