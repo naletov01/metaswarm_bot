@@ -237,7 +237,7 @@ def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
             f"→ Kling Master:   {c // COST_KLING_MAST}",
             f"→ Veo3:           {c // COST_VEO}\n",
             f"Приглашённых друзей: {user.invited_count}/{MAX_INVITES}",
-            f"Бесплатных генераций (бонус): {user.bonus_credits}\n",
+            f"Бонусных кредитов: {user.bonus_credits}\n",
             f"Подписка Premium: {'Активна ✅' if user.premium else 'Не активна ❌'}"
         ]
         if user.premium and user.premium_until:
