@@ -15,14 +15,6 @@ from handlers import (
     start, image_upload_handler, text_handler, menu_callback, 
     on_check_sub, choose_model, profile, partner)
 
-# from datetime import datetime
-# from typing import Generator
-# from sqlalchemy import (
-#     Column, Integer, Boolean, DateTime, String, create_engine
-# )
-# from sqlalchemy.ext.declarative import declarative_base
-# from sqlalchemy.orm import sessionmaker
-
 
 # ——— Настройка логирования ———
 logging.basicConfig(
