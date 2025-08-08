@@ -2,7 +2,6 @@
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import config
-from config import ADMIN_IDS
 from config import COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO, MAX_INVITES
 from typing import Tuple
 from db     import SessionLocal
@@ -12,7 +11,6 @@ from db_utils import get_user
 CB_MAIN            = "menu:main"
 CB_GENERATION      = "menu:generation"
 CB_PROFILE         = "menu:profile"
-# CB_INFO            = "menu:info"
 CB_PARTNER         = "menu:partner"
 
 CB_SUB_PREMIUM     = "menu:sub_premium"
@@ -65,7 +63,6 @@ MENUS = {
             [InlineKeyboardButton("🎞 Генерация видео", callback_data=CB_GENERATION),],
             [InlineKeyboardButton("🔥 Купить подписку",    callback_data=CB_SUB_PREMIUM),],
             [InlineKeyboardButton("👤 Профиль",          callback_data=CB_PROFILE),],
-            # [InlineKeyboardButton("ℹ️ О моделях",        callback_data=CB_INFO),],
             [InlineKeyboardButton("🤑 Партнёрка",        callback_data=CB_PARTNER),],
         ],
     },
@@ -74,7 +71,7 @@ MENUS = {
     CB_GENERATION: {
         "text": (
             "🎞 <b>Генерация видео</b>\nСамые современные модели для создания реалистичных и креативных видео.\n\n"
-            "🎬 <b>Kling Standar:</b>\n\nБыстрая и доступная модель для базовой генерации видео. Подходит для тестов и простых идей.\n\n"
+            "🎬 <b>Kling Standart:</b>\n\nБыстрая и доступная модель для базовой генерации видео. Подходит для тестов и простых идей.\n\n"
             "🎥 <b>Kling Pro:</b>\n\nУлучшенная версия с более высокой детализацией и качеством. Отличный баланс скорости и реализма.\n\n"
             "🏆 <b>Kling Master:</b>\n\nМаксимальное качество и кинематографичность. Для тех, кто хочет получить лучшее видео из своих фото.\n\n"
             "🔥 <b>Veo3:</b>\n\nМодель от Google для генерации видео с озвучкой по текстовому описанию. Создаёт яркие и креативные ролики без загрузки фото.\n\n"
@@ -82,7 +79,7 @@ MENUS = {
         ),
         # в render_menu мы подставим замок, если нет премиума
         "buttons": [
-            [ InlineKeyboardButton("🎬 Kling Standard 🎬", callback_data=CB_GEN_KLING_STD) ],
+            [ InlineKeyboardButton("🎬 Kling Standart 🎬", callback_data=CB_GEN_KLING_STD) ],
             [ InlineKeyboardButton("🎥 Kling Pro 🎥",       callback_data=CB_GEN_KLING_PRO) ],
             [ InlineKeyboardButton("🏆 Kling Master 🏆",    callback_data=CB_GEN_KLING_MAST) ],
             [ InlineKeyboardButton("🔥 Veo3 со звуком 🔥",  callback_data=CB_GEN_VEO) ],
@@ -94,7 +91,7 @@ MENUS = {
     # CB_INFO: {
     #     "text": "ℹ️ <b>О генеративных моделях</b>\n\nКраткое описание доступных режимов:",
     #     "buttons": [
-    #         [ InlineKeyboardButton("🎬 Kling Standard 🎬", callback_data=CB_GEN_KLING_STD) ],
+    #         [ InlineKeyboardButton("🎬 Kling Standart 🎬", callback_data=CB_GEN_KLING_STD) ],
     #         [ InlineKeyboardButton("🎥 Kling Pro 🎥",       callback_data=CB_GEN_KLING_PRO) ],
     #         [ InlineKeyboardButton("🏆 Kling Master 🏆",    callback_data=CB_GEN_KLING_MAST) ],
     #         [ InlineKeyboardButton("🔥 Veo3 со звуком 🔥",  callback_data=CB_GEN_VEO) ],
@@ -112,7 +109,7 @@ MENUS = {
             "→ Добавляйте в описание свою реферальную ссылку\n"
             "→ За каждую оплату подписки по вашей ссылке вы получаете <b>35%</b> от суммы\n\n"
             "Ваша персональная реферальная ссылка:\n"
-            "https://t.me/metaswarm_bot?start={{user_id}}"
+            "https://t.me/{bot_username}?start={{user_id}}"
         ),
         "buttons": [
             [ InlineKeyboardButton("⬅️ Назад",              callback_data=CB_MAIN) ],
@@ -124,13 +121,13 @@ MENUS = {
         "text": (
             "🔥 <b>Подписка Premium</b>\n\n"
             "Получите полный доступ к возможностям бота:\n\n"
-            "⤷ Доступ ко всем моделям генерации видео (Kling Standard, Pro, Master и Veo3)\n"
+            "⤷ Доступ ко всем моделям генерации видео (Kling Standart, Pro, Master и Veo3)\n"
             "⤷ Повышенные лимиты на количество генераций\n"
             "⤷ Приоритетная очередь (ваши видео создаются быстрее)\n"
             "⤷ Кинематографичное качество и расширенные настройки\n"
             "⤷ Поддержка популярных трендовых промптов\n\n"
             "🍓 Лимиты:\n"
-            "→ Kling Standard: 120 генераций в год\n"
+            "→ Kling Standart: 120 генераций в год\n"
             "→ Kling Pro: 80 генераций в год\n"
             "→ Kling Master: 40 генераций в год\n"
             "→ Veo3: 20 генераций в год\n\n"
@@ -164,7 +161,7 @@ MENUS = {
             "→ За каждых 5 приглашённых друзей вы получаете 1 бесплатную генерацию видео\n"
             "→ Максимум можно пригласить 10 друзей (и получить до 3 бесплатных генераций)\n\n"
             "Ваша реферальная ссылка:\n"
-            "https://t.me/metaswarm_bot?start={{user_id}}"
+            "https://t.me/{bot_username}?start={{user_id}}"
         ),
         "buttons": [
             [ InlineKeyboardButton("⬅️ Назад", callback_data=CB_PROFILE) ],
@@ -253,7 +250,7 @@ def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
             "👤 <b>Ваш профиль</b>\n",
             f"Кредитов осталось: {c}\n",
             "Генераций осталось:",
-            f"→ Kling Standard: {c // COST_KLING_STD}",
+            f"→ Kling Standart: {c // COST_KLING_STD}",
             f"→ Kling Pro:      {c // COST_KLING_PRO}",
             f"→ Kling Master:   {c // COST_KLING_MAST}",
             f"→ Veo3:           {c // COST_VEO}\n",
@@ -288,7 +285,7 @@ def render_menu(menu_key: str, user_id: int) -> (str, InlineKeyboardMarkup):
         return get_profile_text(user_id)
         
     m = MENUS[menu_key]
-    has_premium = (user_id in ADMIN_IDS) or (config.user_limits.get(user_id, 0) > 0)  # <- пример проверки
+    has_premium = (user_id in config.ADMIN_IDS) or (config.user_limits.get(user_id, 0) > 0)  # <- пример проверки
     buttons = []
 
     # если это меню Генерации — ставим замок
@@ -307,5 +304,6 @@ def render_menu(menu_key: str, user_id: int) -> (str, InlineKeyboardMarkup):
     markup = InlineKeyboardMarkup(buttons)
     # заменяем {{user_id}} в тексте на реальный ID
     text = m["text"].replace("{{user_id}}", str(user_id))
+    text = text.replace("{bot_username}", config.bot.username)
     return text, markup
 
