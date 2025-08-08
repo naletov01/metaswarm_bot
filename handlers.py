@@ -36,7 +36,6 @@ from config import (
     user_limits,
     CHANNEL_USERNAME,
     CHANNEL_LINK,
-    ADMIN_IDS,
     COSTS,
     BONUS_PER_INVITE,
     MAX_INVITES
@@ -454,20 +453,19 @@ def menu_callback(update: Update, context: CallbackContext):
     chat_id = q.message.chat.id
     data = q.data
     
-    has_premium = (uid in ADMIN_IDS) or (config.user_limits.get(uid, 0) > 0)
+    # has_premium = (uid in ADMIN_IDS) or (config.user_limits.get(uid, 0) > 0)
     
     # 1) Блокировка и выбор моделей
     if data in MODEL_MAP:
-        if not has_premium:
-            text, markup = render_menu(CB_SUB_PREMIUM, uid)
-            return context.bot.send_message(
-                chat_id=chat_id,
-                text=text,
-                reply_markup=markup,
-                parse_mode="HTML"
-            )
+        # if not has_premium:
+        #     text, markup = render_menu(CB_SUB_PREMIUM, uid)
+        #     return context.bot.send_message(
+        #         chat_id=chat_id,
+        #         text=text,
+        #         reply_markup=markup,
+        #         parse_mode="HTML"
+        #     )
 
-        # у пользователя есть премиум — сохраняем модель
         model = MODEL_MAP[data]
         user_data.setdefault(uid, {})["model"] = model
 
