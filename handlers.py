@@ -418,6 +418,7 @@ def choose_model(update: Update, context: CallbackContext):
     text, markup = render_menu(CB_GENERATION, user_id)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
+
 # /profile → Профиль
 def profile(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
@@ -427,14 +428,6 @@ def profile(update: Update, context: CallbackContext):
     text, markup = get_profile_text(user_id)
     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
-# # /info → О моделях
-# def info(update: Update, context: CallbackContext):
-#     user_id = update.effective_user.id
-#     chat_id = update.effective_chat.id
-#     if not check_subscription(user_id):
-#         return send_subscribe_prompt(chat_id)
-#     text, markup = render_menu(CB_INFO, user_id)
-#     update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
 
 # /partner → Партнёрка
 def partner(update: Update, context: CallbackContext):
