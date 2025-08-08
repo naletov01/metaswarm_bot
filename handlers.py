@@ -1,55 +1,32 @@
 # handlers.py
 
 import config
-import logging
 import replicate
 
 import time
 import tempfile, requests, httpx, os 
 import threading
-from threading import Thread, Event
-from telegram import (
-    ChatAction, 
-    InlineKeyboardButton, 
-    InlineKeyboardMarkup,
-    Update)
+
+from telegram import ChatAction, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext
 from models import User
 from db import SessionLocal
 from db_utils import get_user
 
-
-from menu import render_menu, MENUS
+from menu import render_menu
 from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_PARTNER 
-from menu import CB_GEN_KLING_STD, CB_GEN_KLING_PRO, CB_GEN_KLING_MAST, CB_GEN_VEO  
-from menu import MODEL_MAP, CB_SUB_PREMIUM
+from menu import CB_GEN_VEO  
+from menu import MODEL_MAP
 from menu import get_profile_text
 from config import (
-    bot,                    # Telegram Bot
-    executor,               # ThreadPoolExecutor
-    generate_semaphore,     # Semaphore для очереди
-    MIN_INTERVAL,           # Интервал анти-спама
-    POSITIVE_PROMPT,        # Константа для prompt-а
-    NEGATIVE_PROMPT,        # Константа для negative_prompt
-    logger,                 # Логгер (или создайте свой через logging.getLogger)
-    user_data,
-    user_limits,
-    CHANNEL_USERNAME,
-    CHANNEL_LINK,
-    COSTS,
-    BONUS_PER_INVITE,
-    MAX_INVITES
-)
-# ─────────────────────────────────────────────────────────────────────────────
+    bot, executor, generate_semaphore, MIN_INTERVAL, POSITIVE_PROMPT,
+    NEGATIVE_PROMPT, logger, user_data, user_limits, CHANNEL_USERNAME,
+    CHANNEL_LINK, COSTS, BONUS_PER_INVITE, MAX_INVITES, SUB_CREDITS, SUB_PERIOD_DAYS
+    )
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from config import (
-    COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO,
-    SUB_CREDITS, SUB_PERIOD_DAYS
-)
 from typing import Tuple, Optional
-
 
 
 # — Проверка и списание кредитов; возвращает (ok, message)
@@ -179,7 +156,7 @@ def generate_and_send_video(user_id):
         user = get_user(db, user_id)
         ok, err = charge_credits(user, model, db)
         if not ok:
-            return bot.send_message(chat_id, err, parse_mode="HTML")
+            return bot.send_message(chat_id=user_id, text=err, parse_mode="HTML")
         try:
             db.commit()
         except Exception:
@@ -446,19 +423,9 @@ def menu_callback(update: Update, context: CallbackContext):
     chat_id = q.message.chat.id
     data = q.data
     
-    # has_premium = (uid in ADMIN_IDS) or (config.user_limits.get(uid, 0) > 0)
-    
     # 1) Блокировка и выбор моделей
     if data in MODEL_MAP:
-        # if not has_premium:
-        #     text, markup = render_menu(CB_SUB_PREMIUM, uid)
-        #     return context.bot.send_message(
-        #         chat_id=chat_id,
-        #         text=text,
-        #         reply_markup=markup,
-        #         parse_mode="HTML"
-        #     )
-
+        
         model = MODEL_MAP[data]
         user_data.setdefault(uid, {})["model"] = model
 
