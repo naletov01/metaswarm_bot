@@ -43,12 +43,11 @@ app = FastAPI()
 async def startup():
     # 1) Инициализация БД (idempotent)
     try:
-        await to_thread.run_sync(Base.metadata.create_all, bind=engine)
+        await to_thread.run_sync(Base.metadata.create_all, engine)
         logger.info("DB init: OK")
     except Exception:
         logger.exception("DB init failed")
         raise
-
     # 2) Выставление вебхука
     try:
         # аккуратно склеиваем базовый URL и путь
@@ -56,10 +55,8 @@ async def startup():
         path = WEBHOOK_PATH if WEBHOOK_PATH.startswith("/") else "/" + WEBHOOK_PATH
         url = base + path
 
-        ok = await to_thread.run_sync(
-            bot.set_webhook,
-            url,
-        )
+        ok = await to_thread.run_sync(bot.set_webhook, url,)
+        
         if not ok:
             logger.warning("Webhook set failed for %s", url)
         else:
