@@ -13,14 +13,11 @@ from models import User
 from db import SessionLocal
 from db_utils import get_user
 
-from menu import render_menu
 from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_PARTNER 
-from menu import CB_GEN_VEO  
-from menu import MODEL_MAP
-from menu import get_profile_text
+from menu import CB_GEN_VEO, MODEL_MAP, get_profile_text, render_menu
 from config import (
-    bot, executor, generate_semaphore, MIN_INTERVAL, POSITIVE_PROMPT,
-    NEGATIVE_PROMPT, logger, user_data, user_limits, CHANNEL_USERNAME,
+    bot, executor, generate_semaphore, logger, user_data, user_limits, 
+    NEGATIVE_PROMPT, CHANNEL_USERNAME, MIN_INTERVAL, POSITIVE_PROMPT,
     CHANNEL_LINK, COSTS, BONUS_PER_INVITE, MAX_INVITES, SUB_CREDITS, SUB_PERIOD_DAYS
     )
 from datetime import datetime, timedelta
