@@ -6,23 +6,17 @@ from fastapi import FastAPI, Request, HTTPException, Depends
 from telegram import Update, BotCommand
 from sqlalchemy.orm import Session
 from db import engine, Base, get_db
-# from datetime import datetime
-# from typing import Generator
-
 import config
 import handlers
 from telegram.ext import (
-    Dispatcher,
-    CommandHandler,
-    MessageHandler,
-    Filters,
-    CallbackContext,
-    CallbackQueryHandler
-)
+    Dispatcher, CommandHandler, MessageHandler,
+    Filters, CallbackContext, CallbackQueryHandler)
 from handlers import (
     start, image_upload_handler, text_handler, menu_callback, 
     on_check_sub, choose_model, profile, partner)
 
+# from datetime import datetime
+# from typing import Generator
 # from sqlalchemy import (
 #     Column, Integer, Boolean, DateTime, String, create_engine
 # )
@@ -44,18 +38,37 @@ DATABASE_URL = config.DATABASE_URL
 
 app = FastAPI()
 
-@app.on_event("startup")
-def init_db():
-    Base.metadata.create_all(bind=engine)
 
 @app.on_event("startup")
-async def setup_webhook():
-    result: bool = await to_thread.run_sync(
-        bot.set_webhook,
-        f"{config.WEBHOOK_URL}{WEBHOOK_PATH}"
-    )
-    if not result:
-        logger.warning("Не удалось установить webhook")
+async def startup():
+    # 1) Инициализация БД (idempotent)
+    try:
+        await to_thread.run_sync(Base.metadata.create_all, bind=engine)
+        logger.info("DB init: OK")
+    except Exception:
+        logger.exception("DB init failed")
+        raise
+
+    # 2) Выставление вебхука
+    try:
+        # аккуратно склеиваем базовый URL и путь
+        base = config.WEBHOOK_URL.rstrip("/")
+        path = WEBHOOK_PATH if WEBHOOK_PATH.startswith("/") else "/" + WEBHOOK_PATH
+        url = base + path
+
+        ok = await to_thread.run_sync(
+            bot.set_webhook,
+            url,
+        )
+        if not ok:
+            logger.warning("Webhook set failed for %s", url)
+        else:
+            info = await to_thread.run_sync(bot.get_webhook_info)
+            logger.info("Webhook set: %s (pending_update_count=%s)", info.url, getattr(info, "pending_update_count", None))
+    except Exception:
+        logger.exception("Webhook setup failed")
+        raise
+
 
 
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
@@ -79,10 +92,10 @@ img_filter = Filters.photo | (Filters.document & Filters.document.mime_type("ima
 dp.add_handler(MessageHandler(img_filter, image_upload_handler))
 dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
 
+
 def error_handler(update, context):
     logger.exception("Error in handler", exc_info=context.error)
 dp.add_error_handler(error_handler)
-
 
 
 # ——— Webhook endpoint ———
