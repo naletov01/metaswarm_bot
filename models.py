@@ -4,6 +4,7 @@ from db import Base
 
 class User(Base):
     __tablename__ = 'users'
+    
     user_id         = Column(Integer, primary_key=True, index=True)
     credits         = Column(Integer, default=0, nullable=False)
     premium         = Column(Boolean, default=False, nullable=False)
@@ -12,5 +13,6 @@ class User(Base):
     invited_count   = Column(Integer, default=0, nullable=False)
     bonus_credits   = Column(Integer, default=0, nullable=False)
     referrer_id = Column(Integer, nullable=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
