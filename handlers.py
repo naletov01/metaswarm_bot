@@ -55,6 +55,20 @@ def charge_credits(user: User, model_key: str, db: Session) -> Tuple[bool, Optio
     return True, None
 
 
+def can_afford(user: User, model_key: str) -> Tuple[bool, Optional[str]]:
+    cost = COSTS.get(model_key)
+    if cost is None:
+        return False, "Неподдерживаемый режим генерации."
+    total = (user.credits or 0) + (user.bonus_credits or 0)
+    if total < cost:
+        return False, (
+            f"⚠️ Недостаточно кредитов: у вас {total}, нужно {cost}. "
+            "Купите пакет или получите бонусные кредиты приглашая друзей. "
+            "Подробности — в профиле."
+        )
+    return True, None
+
+
 # — Применить подписку (вызывается при оплате)
 def apply_subscription(user: 'User', sub_type: str, db: Session):
     days = SUB_PERIOD_DAYS[sub_type]
@@ -155,6 +169,11 @@ def generate_and_send_video(user_id):
             db.rollback()
             raise
     # ──── /КОНЕЦ вставки┄────
+    
+    bot.send_message(
+        chat_id=user_id,
+        text="⏳ Видео генерируется… Обычно это занимает 3–5 минут (иногда до 20)."
+    )
     
     # запускаем фоновой поток, который шлёт «upload_video» раз в 10 сек
     stop_event = threading.Event()
@@ -516,12 +535,13 @@ def image_upload_handler(update: Update, context: CallbackContext):
             # --- быстрый чек кредитов ---
             with SessionLocal() as db:
                 user = get_user(db, user_id)
-                ok, errmsg = charge_credits(user, data.get("model", "kling-pro"), db)
+                # ok, errmsg = charge_credits(user, data.get("model", "kling-pro"), db)
+                ok, errmsg = can_afford(user, data.get("model", "kling-pro"))
                 if not ok:
                     update.message.reply_text(errmsg, parse_mode="HTML")
                     return
                     
-            update.message.reply_text("⏳ Генерирую видео по изображению и промпту… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
+            # update.message.reply_text("⏳ Генерирую видео по изображению и промпту… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
             executor.submit(queued_generate_and_send_video, user_id)
         else:
             update.message.reply_text("Изображение получено. Теперь введите промпт для генерации видео.")
@@ -560,15 +580,16 @@ def text_handler(update: Update, context: CallbackContext):
         
         # --- быстрый чек кредитов ---
         with SessionLocal() as db:
-            data = user_data.setdefault(user_id, {})
+            # data = user_data.setdefault(user_id, {})
             model = data.get("model")
             user = get_user(db, user_id)
-            ok, errmsg = charge_credits(user, model, db)
+            # ok, errmsg = charge_credits(user, model, db)
+            ok, errmsg = can_afford(user, model)
             if not ok:
                 update.message.reply_text(errmsg, parse_mode="HTML")
                 return
                 
-        update.message.reply_text("⏳ Видео генерируется… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
+        # update.message.reply_text("⏳ Видео генерируется… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
         executor.submit(queued_generate_and_send_video, user_id)
     else:
         update.message.reply_text("Пожалуйста, сначала загрузите изображение.")
