@@ -74,7 +74,6 @@ def apply_subscription(user: 'User', sub_type: str, db: Session):
     except Exception:
         db.rollback()
         raise
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 def refund_credits(user_id: int, amount: int) -> bool:
@@ -88,12 +87,7 @@ def refund_credits(user_id: int, amount: int) -> bool:
             db.commit()
         logger.info(f"[{user_id}] 🔄 Refund successful: +{amount} credits")
         return True
-    except SQLAlchemyError as e:
-        # Откатит автоматически при выходе из with, но на всякий случай:
-        try:
-            db.rollback()
-        except:
-            pass
+    except SQLAlchemyError:
         logger.exception(f"[{user_id}] ❌ Refund failed ({amount} credits): {e}")
         return False
     except Exception as e:
