@@ -6,7 +6,6 @@ import logging
 from collections import defaultdict
 from telegram import Bot
 from telegram.utils.request import Request as TelegramRequest
-# import replicate
 from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +18,7 @@ BOT_TOKEN           = os.getenv("BOT_TOKEN")
 WEBHOOK_SECRET      = os.getenv("WEBHOOK_SECRET")
 WEBHOOK_PATH        = f"/webhook/{WEBHOOK_SECRET}"
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./bot.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://metaswarm-bot.onrender.com")
 
 # ——— Обязательная подписка ———
