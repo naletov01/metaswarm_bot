@@ -120,7 +120,7 @@ def refund_credits(user_id: int, amount: int) -> bool:
             db.commit()
         logger.info(f"[{user_id}] 🔄 Refund successful: +{amount} credits")
         return True
-    except SQLAlchemyError:
+    except SQLAlchemyError as e:
         logger.exception(f"[{user_id}] ❌ Refund failed ({amount} credits): {e}")
         return False
     except Exception as e:
@@ -134,7 +134,9 @@ def _keep_upload_action(bot, chat_id, stop_event):
     пока stop_event не станет установлен.
     """
     while not stop_event.is_set():
-        bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+        ok = send_safe(bot.send_chat_action, chat_id=chat_id, action=ChatAction.UPLOAD_VIDEO)
+        if not ok:
+            break
         stop_event.wait(10)
 
 
@@ -181,7 +183,8 @@ def generate_and_send_video(user_id):
         user = get_user(db, user_id)
         ok, err = charge_credits(user, model, db)
         if not ok:
-            return bot.send_message(chat_id=user_id, text=err, parse_mode="HTML")
+            send_safe(bot.send_message, chat_id=user_id, text=err, parse_mode="HTML")
+            return
         try:
             db.commit()
         except Exception:
@@ -189,10 +192,7 @@ def generate_and_send_video(user_id):
             raise
     # ──── /КОНЕЦ вставки┄────
     
-    bot.send_message(
-        chat_id=user_id,
-        text="⏳ Видео генерируется… Обычно это занимает 3–5 минут (иногда до 20)."
-    )
+    send_safe(bot.send_message, chat_id=user_id, text="⏳ Видео генерируется… Обычно это занимает 3–5 минут (иногда до 20).")
     
     # запускаем фоновой поток, который шлёт «upload_video» раз в 10 сек
     stop_event = threading.Event()
@@ -210,7 +210,7 @@ def generate_and_send_video(user_id):
         tmp_file = None
         if model in ["kling-standard", "kling-pro", "kling-master"]:
             if not image_url:
-                bot.send_message(chat_id=user_id, text="Сначала загрузите изображение.")
+                send_safe(bot.send_message, chat_id=user_id, text="Сначала загрузите изображение.")
                 return
             response = requests.get(image_url)
             response.raise_for_status()
@@ -275,18 +275,15 @@ def generate_and_send_video(user_id):
             check = httpx.head(video_url, timeout=10)
             logger.info(f"[{user_id}] HEAD status: {check.status_code}")
             if check.status_code != 200:
-                bot.send_message(chat_id=user_id, text="⚠️ Видео ещё не готово. Попробуйте позже.\n" + video_url)
+                send_safe(bot.send_message, chat_id=user_id, text="⚠️ Видео ещё не готово. Попробуйте позже.\n" + video_url)
                 return
         except Exception as e:
             logger.warning(f"[{user_id}] HEAD-запрос не удался: {e}")
-            bot.send_message(chat_id=user_id, text="⚠️ Не удалось проверить видео. Вот ссылка:\n" + video_url)
+            send_safe(bot.send_message, chat_id=user_id, text="⚠️ Не удалось проверить видео. Вот ссылка:\n" + video_url)
             return
         
         # ✅ Твое видео готово!
-        bot.send_message(
-            chat_id=user_id,
-            text="✅ Твое видео готово!"
-        )
+        send_safe(bot.send_message, chat_id=user_id, text="✅ Твое видео готово!")
 
         # ✅ Отправка ролика как документ (скачаем и перешлём сами)
         try:
@@ -300,24 +297,14 @@ def generate_and_send_video(user_id):
 
             # 2) отправляем как документ
             with open(tmp_path, "rb") as f:
-                bot.send_document(
-                    chat_id=user_id,
-                    document=f,
-                    filename="video.mp4"
-                )
+                send_safe(bot.send_document, chat_id=user_id, document=f, filename="video.mp4")
 
             # 3) просто отправляем текст без меню
-            bot.send_message(
-                chat_id=user_id,
-                text="Сделаем ещё видео?🥹 Просто загрузи фото и напиши новый промпт."
-            )
+            send_safe(bot.send_message, chat_id=user_id, text="Сделаем ещё видео?🥹 Просто загрузи фото и напиши новый промпт.")
 
         except Exception as e:
             logger.error(f"[{user_id}] ❌ Ошибка отправки документа: {e}")
-            bot.send_message(
-                chat_id=user_id,
-                text="⚠️ Не удалось отправить видео. Вот ссылка:\n" + video_url
-            )
+            send_safe(bot.send_message, chat_id=user_id, text="⚠️ Не удалось отправить видео. Вот ссылка:\n" + video_url)
         finally:
             if 'tmp_path' in locals() and os.path.exists(tmp_path):
                 os.remove(tmp_path)
@@ -329,7 +316,7 @@ def generate_and_send_video(user_id):
         logger.exception(f"[{user_id}] ❌ Video generation error")
         stop_event.set()
         refund_credits(user_id, COSTS[model])
-        bot.send_message(chat_id=user_id, text="❌ Ошибка генерации видео. Попробуйте позже.")
+        send_safe(bot.send_message, chat_id=user_id, text="❌ Ошибка генерации видео. Попробуйте позже.")
 
     finally:
         if tmp_file:
@@ -413,7 +400,7 @@ def start(update: Update, context: CallbackContext):
 
     # 2) если подписан — рендерим главное меню через menu.render_menu
     text, markup = render_menu(CB_MAIN, user_id)
-    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
+    send_safe(context.bot.send_message, chat_id=chat_id, text=text, reply_markup=markup, parse_mode="HTML")
     
 
 # 2) Привязываем каждый «гл. пункт» к командам:
@@ -422,9 +409,10 @@ def choose_model(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
     if not check_subscription(user_id):
-        return send_subscribe_prompt(chat_id)
+        send_safe(send_subscribe_prompt, chat_id)
+        return
     text, markup = render_menu(CB_GENERATION, user_id)
-    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
+    send_safe(context.bot.send_message, chat_id=chat_id, text=text, reply_markup=markup, parse_mode="HTML")
 
 
 # /profile → Профиль
@@ -432,9 +420,10 @@ def profile(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
     if not check_subscription(user_id):
-        return send_subscribe_prompt(chat_id)
+        send_safe(send_subscribe_prompt, chat_id)
+        return
     text, markup = get_profile_text(user_id)
-    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
+    send_safe(context.bot.send_message, chat_id=chat_id, text=text, reply_markup=markup, parse_mode="HTML")
 
 
 # /partner → Партнёрка
@@ -442,9 +431,10 @@ def partner(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
     if not check_subscription(user_id):
-        return send_subscribe_prompt(chat_id)
+        send_safe(send_subscribe_prompt, chat_id)
+        return
     text, markup = render_menu(CB_PARTNER, user_id)
-    update.message.reply_text(text, reply_markup=markup, parse_mode="HTML")
+    send_safe(context.bot.send_message, chat_id=chat_id, text=text, reply_markup=markup, parse_mode="HTML")
 
 
 def menu_callback(update: Update, context: CallbackContext):
@@ -461,25 +451,22 @@ def menu_callback(update: Update, context: CallbackContext):
         user_data.setdefault(uid, {})["model"] = model
 
         if data == CB_GEN_VEO:
-            return context.bot.send_message(
-                chat_id=chat_id,
-                text=(
-                    f"✅ Режим «{model}» выбран.\n"
-                    "Теперь введите текстовый промпт для генерации видео (без загрузки изображения)."
-                )
-            )
+            send_safe(context.bot.send_message, chat_id=chat_id, text=(
+                f"✅ Режим «{model}» выбран.\n"
+                "Теперь введите текстовый промпт для генерации видео (без загрузки изображения)."
+            ))
+            return
         else:
-            return context.bot.send_message(
-                chat_id=chat_id,
-                text=(
-                    f"✅ Режим «{model}» выбран.\n"
-                    "Загрузите изображение, затем введите промпт для видео."
-                )
-            )
+            send_safe(context.bot.send_message, chat_id=chat_id, text=(
+                f"✅ Режим «{model}» выбран.\n"
+                "Загрузите изображение, затем введите промпт для видео."
+            ))
+            return
 
     # 2) блокируем навигацию, если отписался
     if not check_subscription(uid):
-        return send_subscribe_prompt(chat_id)
+        send_safe(send_subscribe_prompt, chat_id)
+        return
         
     try:
         q.message.delete()
@@ -488,12 +475,7 @@ def menu_callback(update: Update, context: CallbackContext):
 
     # отрисовываем новое
     text, markup = render_menu(q.data, uid)
-    context.bot.send_message(
-        chat_id=chat_id,
-        text=text,
-        reply_markup=markup,
-        parse_mode="HTML"
-    )
+    send_safe(context.bot.send_message, chat_id=chat_id, text=text, reply_markup=markup, parse_mode="HTML")
 
 
 def on_check_sub(update: Update, context: CallbackContext):
@@ -513,12 +495,8 @@ def on_check_sub(update: Update, context: CallbackContext):
 
         # 3) отправляем главное меню inline-кнопками
         text, markup = render_menu(CB_MAIN, user_id)
-        context.bot.send_message(
-            chat_id=chat_id,
-            text=text,
-            reply_markup=markup,
-            parse_mode="HTML"
-        )
+        send_safe(context.bot.send_message, chat_id=chat_id, text=text, reply_markup=markup, parse_mode="HTML")
+        
     else:
         # если всё ещё не подписан — показываем alert
         q.answer("Я всё ещё не вижу вашу подписку.", show_alert=True)
@@ -527,7 +505,8 @@ def on_check_sub(update: Update, context: CallbackContext):
 def image_upload_handler(update: Update, context: CallbackContext):
     uid = update.effective_user.id
     if not check_subscription(uid):
-        return send_subscribe_prompt(uid)
+        send_safe(send_subscribe_prompt, uid)
+        return
 
     user_id = update.effective_user.id
 
@@ -558,22 +537,23 @@ def image_upload_handler(update: Update, context: CallbackContext):
                 # ok, errmsg = charge_credits(user, data.get("model", "kling-pro"), db)
                 ok, errmsg = can_afford(user, data.get("model", "kling-pro"))
                 if not ok:
-                    update.message.reply_text(errmsg, parse_mode="HTML")
+                    send_safe(context.bot.send_message, chat_id=user_id, text=errmsg, parse_mode="HTML")
                     return
                     
             # update.message.reply_text("⏳ Генерирую видео по изображению и промпту… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
             executor.submit(queued_generate_and_send_video, user_id)
         else:
-            update.message.reply_text("Изображение получено. Теперь введите промпт для генерации видео.")
+            send_safe(context.bot.send_message, chat_id=user_id, text="Изображение получено. Теперь введите промпт для генерации видео.")
     except Exception as e:
         logger.error(f"Error saving uploaded image: {e}")
-        update.message.reply_text("Не удалось сохранить изображение. Попробуйте ещё раз.")
+        send_safe(context.bot.send_message, chat_id=user_id, text="Не удалось сохранить изображение. Попробуйте ещё раз.")
         
 
 def text_handler(update: Update, context: CallbackContext):
     uid = update.effective_user.id
     if not check_subscription(uid):
-        return send_subscribe_prompt(uid)
+        send_safe(send_subscribe_prompt, uid)
+        return
 
     user_id = update.effective_user.id
     text = update.message.text.strip()
@@ -589,7 +569,7 @@ def text_handler(update: Update, context: CallbackContext):
     last = data.get("last_action", 0)
     if now - last < MIN_INTERVAL:
         wait = int(MIN_INTERVAL - (now - last))
-        update.message.reply_text(f"Пожалуйста, подождите ещё {wait} сек.")
+        send_safe(context.bot.send_message, chat_id=user_id, text=f"Пожалуйста, подождите ещё {wait} сек.")
         return
 
     # Обработка промпта
@@ -606,10 +586,10 @@ def text_handler(update: Update, context: CallbackContext):
             # ok, errmsg = charge_credits(user, model, db)
             ok, errmsg = can_afford(user, model)
             if not ok:
-                update.message.reply_text(errmsg, parse_mode="HTML")
+                send_safe(context.bot.send_message, chat_id=user_id, text=errmsg, parse_mode="HTML")
                 return
                 
         # update.message.reply_text("⏳ Видео генерируется… Обычно это занимает 3-5 минут, но иногда до 20 минут при большой очереди")
         executor.submit(queued_generate_and_send_video, user_id)
     else:
-        update.message.reply_text("Пожалуйста, сначала загрузите изображение.")
+        send_safe(context.bot.send_message, chat_id=user_id, text="Пожалуйста, сначала загрузите изображение.")
