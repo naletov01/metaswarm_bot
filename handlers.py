@@ -9,6 +9,7 @@ import threading
 
 from telegram import ChatAction, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext
+from telegram.error import Unauthorized, BadRequest, TimedOut, RetryAfter, NetworkError
 from models import User
 from db import SessionLocal
 from db_utils import get_user
@@ -24,6 +25,24 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import Tuple, Optional
+
+
+def send_safe(fn, *args, **kwargs) -> bool:
+    try:
+        fn(*args, **kwargs)
+        return True
+    except Unauthorized:
+        # пользователь заблокировал бота/удалил чат — молча игнорим
+        return False
+    except RetryAfter as e:
+        time.sleep(e.retry_after)
+        try:
+            fn(*args, **kwargs)
+            return True
+        except Exception:
+            return False
+    except (BadRequest, TimedOut, NetworkError):
+        return False
 
 
 # — Проверка и списание кредитов; возвращает (ok, message)
@@ -339,14 +358,14 @@ def start(update: Update, context: CallbackContext):
     
     # 1) Распарсить возможный payload (/start payload)
     payload = None
-    args = getattr(context, "args", [])
+    # args = getattr(context, "args", [])
     if context.args:
         payload = context.args[0]
     else:
         parts = (update.message.text or "").split(maxsplit=1)
         payload = parts[1] if len(parts) == 2 else None
 
-    # 2) Из payload достаём реферер, если он в формате ref_<id>
+    # 2) Из payload достаём реферер
     referrer_id = None
     if payload and payload.isdigit():
         try:
@@ -389,7 +408,8 @@ def start(update: Update, context: CallbackContext):
 
     # 1) проверяем подписку — если не подписан, выходим и показываем промпт
     if not check_subscription(user_id):
-        return send_subscribe_prompt(chat_id)
+        send_safe(send_subscribe_prompt, chat_id)
+        return
 
     # 2) если подписан — рендерим главное меню через menu.render_menu
     text, markup = render_menu(CB_MAIN, user_id)
