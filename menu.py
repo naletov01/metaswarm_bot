@@ -158,7 +158,7 @@ MENUS = {
             "⚠️ Переходя на оплату вы соглашаетесь с регламентом рекуррентных платежей."
         ),
         "buttons": [
-            [ InlineKeyboardButton("TG Stars | 125 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 150 ⭐", url="https://example.com") ],
             [ InlineKeyboardButton("Stripe | 1 $",       url="https://example.com") ],
             # [ InlineKeyboardButton("Crypto | 1 $",       url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",            callback_data=CB_SUB_PREMIUM) ],
@@ -184,7 +184,7 @@ MENUS = {
             "⚠️ Переходя на оплату вы соглашаетесь с регламентом рекуррентных платежей."
         ),
         "buttons": [
-            [ InlineKeyboardButton("TG Stars | 3500 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 8500 ⭐", url="https://example.com") ],
             [ InlineKeyboardButton("Stripe | 85 $", url="https://example.com") ],
             [ InlineKeyboardButton("Crypto | 85 $", url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_SUB_PREMIUM) ],
@@ -204,7 +204,7 @@ MENUS = {
     CB_CRED_PRO: {
         "text": "🔥 <b>Пакет Pro</b>\n\nВыберите метод оплаты:",
         "buttons": [
-            [ InlineKeyboardButton("TG Stars | 2500 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 3000 ⭐", url="https://example.com") ],
             [ InlineKeyboardButton("Stripe | 30 $",      url="https://example.com") ],
             [ InlineKeyboardButton("Crypto | 30 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_BUY_CREDITS) ],
@@ -213,7 +213,7 @@ MENUS = {
     CB_CRED_MAX: {
         "text": "💎 <b>Пакет Max</b>\n\nВыберите метод оплаты:",
         "buttons": [
-            [ InlineKeyboardButton("TG Stars | 3500 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 5000 ⭐", url="https://example.com") ],
             [ InlineKeyboardButton("Stripe | 50 $",      url="https://example.com") ],
             [ InlineKeyboardButton("Crypto | 50 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_BUY_CREDITS) ],
