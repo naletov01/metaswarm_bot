@@ -58,15 +58,15 @@ async def startup():
         logger.exception("Webhook setup failed")
         raise
 
-# main.py (startup)
-@app.on_event("startup")
-def startup():
-    Base.metadata.create_all(bind=engine)
-    from db import ensure_bigint_ids
-    try:
-        ensure_bigint_ids()
-    except Exception:
-        logger.exception("ensure_bigint_ids failed")  # не падаем на старте
+# # main.py (startup)
+# @app.on_event("startup")
+# def startup():
+#     Base.metadata.create_all(bind=engine)
+#     from db import ensure_bigint_ids
+#     try:
+#         ensure_bigint_ids()
+#     except Exception:
+#         logger.exception("ensure_bigint_ids failed")  # не падаем на старте
 
 
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
