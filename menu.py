@@ -160,7 +160,7 @@ MENUS = {
         "buttons": [
             [ InlineKeyboardButton("TG Stars | 125 ⭐", url="https://example.com") ],
             [ InlineKeyboardButton("Stripe | 1 $",       url="https://example.com") ],
-            [ InlineKeyboardButton("Crypto | 1 $",       url="https://example.com") ],
+            # [ InlineKeyboardButton("Crypto | 1 $",       url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",            callback_data=CB_SUB_PREMIUM) ],
         ],
     },
@@ -173,7 +173,7 @@ MENUS = {
         "buttons": [
             [ InlineKeyboardButton("TG Stars | 1000 ⭐", url="https://example.com") ],
             [ InlineKeyboardButton("Stripe | 10 $",      url="https://example.com") ],
-            [ InlineKeyboardButton("Crypto | 10 $",      url="https://example.com") ],
+            # [ InlineKeyboardButton("Crypto | 10 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",            callback_data=CB_SUB_PREMIUM) ],
         ],
     },
