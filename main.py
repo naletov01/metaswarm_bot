@@ -1,11 +1,11 @@
 # main.py 
 
-import logging
+import logging, json
 from anyio import to_thread
 from fastapi import FastAPI, Request, HTTPException, Depends
 from telegram import Update, BotCommand
 from sqlalchemy.orm import Session
-from db import engine, Base, get_db
+from db import engine, Base, get_db, SessionLocal
 import config
 import handlers
 from telegram.ext import (
@@ -14,6 +14,9 @@ from telegram.ext import (
 from handlers import (
     start, image_upload_handler, text_handler, menu_callback, 
     on_check_sub, choose_model, profile, partner)
+from models import Payment, PaymentStatus
+from services.billing import finalize_success, compute_price
+from payments.fondy import _fondy_signature
 
 
 # ——— Настройка логирования ———
@@ -109,5 +112,83 @@ async def telegram_webhook(request: Request, db=Depends(get_db)):
 @app.head("/")
 def root():
     return {"status": "Bot is running"}
+
+
+@app.get("/pay/fondy")
+async def pay_fondy(order_id: str, amount: int, item: str):
+    # Возвращаем простую HTML-страницу с auto-submit POST на FONDY_GATEWAY
+    # чтобы соблюсти подпись и передать все поля (можно сразу редиректом, если используешь их checkout-url API)
+    html = f"""
+    <html><body onload="document.forms[0].submit()">
+      <form action="https://pay.fondy.eu/api/checkout/redirect/" method="POST">
+        <input type="hidden" name="merchant_id" value="{FONDY_MERCHANT_ID}">
+        <input type="hidden" name="order_id" value="{order_id}">
+        <input type="hidden" name="amount" value="{amount}">
+        <input type="hidden" name="currency" value="{FONDY_CURRENCY}">
+        <input type="hidden" name="order_desc" value="{item}">
+        <input type="hidden" name="server_callback_url" value="{BASE_URL}/webhook/fondy">
+        <input type="hidden" name="response_url" value="{BASE_URL}/payment/thanks">
+        <input type="hidden" name="signature" value="{_fondy_signature({
+            'merchant_id': int(FONDY_MERCHANT_ID),
+            'order_id': order_id,
+            'amount': amount,
+            'currency': FONDY_CURRENCY
+        })}">
+      </form>
+    </body></html>
+    """
+    return HTMLResponse(html)
+
+@app.post("/webhook/fondy")
+async def webhook_fondy(request: Request):
+    data = await request.form()
+    fields = dict(data)
+    sign = fields.get("signature")
+    expected = _fondy_signature({
+        "merchant_id": int(fields["merchant_id"]),
+        "order_id": fields["order_id"],
+        "amount": int(fields["amount"]),
+        "currency": fields["currency"],
+    })
+    if sign != expected:
+        raise HTTPException(400, "Bad signature")
+
+    order_id = fields["order_id"]
+    status = fields.get("order_status")
+    with SessionLocal() as db:
+        p = db.query(Payment).filter(Payment.external_id==order_id).first()
+        if not p:
+            logger.error("Fondy webhook: payment not found %s", order_id)
+            raise HTTPException(404, "Not found")
+
+        if status == "approved":
+            if finalize_success(db, p):
+                from handlers import send_safe
+                send_safe(None, p.user_id, "✅ Оплата через Fondy прошла успешно. Начисления выполнены.")
+            return {"ok": True}
+        else:
+            from db_utils import mark_payment_failed
+            mark_payment_failed(db, p.id, f"Fondy status={status}")
+            return {"ok": True}
+
+@app.post("/webhook/cryptobot")
+async def webhook_cryptobot(request: Request):
+    body = await request.json()
+    event = body.get("update_type")
+    if event != "invoice_paid":
+        return {"ok": True}
+
+    inv = body["invoice_paid"]
+    invoice_id = str(inv["invoice_id"])
+    with SessionLocal() as db:
+        p = db.query(Payment).filter(Payment.external_id==invoice_id).first()
+        if not p:
+            raise HTTPException(404, "payment not found")
+
+        if finalize_success(db, p):
+            from handlers import send_safe
+            send_safe(None, p.user_id, "✅ Оплата через CryptoBot прошла успешно. Начисления выполнены.")
+    return {"ok": True}
+
 
 
