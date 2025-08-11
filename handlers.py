@@ -26,6 +26,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import Tuple, Optional
 
+from services.billing import finalize_success
+from models import Payment
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 def send_safe(fn, *args, **kwargs) -> bool:
     try:
@@ -43,6 +50,38 @@ def send_safe(fn, *args, **kwargs) -> bool:
             return False
     except (BadRequest, TimedOut, NetworkError):
         return False
+
+
+def handle_successful_payment(update: Update, context: CallbackContext):
+    sp = update.message.successful_payment
+    payload = sp.invoice_payload  # там user_id:kind:code:stars
+    try:
+        uid, kind, code, _ = payload.split(":")
+        uid = int(uid)
+    except Exception as e:
+        logger.exception("Bad payload in successful_payment: %s", payload)
+        return
+
+    with SessionLocal() as db:
+        # найдём последний черновик под этот payload
+        p = db.query(Payment).filter(
+            Payment.user_id==uid,
+            Payment.item_kind==kind,
+            Payment.item_code==code,
+            Payment.method=="stars",
+            Payment.status.in_(["created", "pending"])
+        ).order_by(Payment.created_at.desc()).first()
+
+        if not p:
+            logger.warning("No draft payment for payload=%s", payload)
+            return
+
+        # Отметим success и начислим
+        ok = finalize_success(db, p)
+        if ok:
+            send_safe(context.bot, uid, "✅ Оплата в Звёздах прошла успешно. Начисления выполнены.")
+        else:
+            send_safe(context.bot, uid, "❌ Платёж отклонён. 3‑дневная подписка может быть куплена только один раз.")
 
 
 # — Проверка и списание кредитов; возвращает (ok, message)
