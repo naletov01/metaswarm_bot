@@ -21,6 +21,23 @@ REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 DATABASE_URL = os.getenv("DATABASE_URL")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://metaswarm-bot.onrender.com")
 
+#__________________________________________________________________________________
+BASE_URL = os.getenv("BASE_URL")  # публичный https-домен FastAPI
+SECRET_KEY = os.getenv("SECRET_KEY")   # для подписи payload
+
+# Платежи Stars (через Bot API) — провайдер-токен НЕ нужен для XTR invoice link
+STARS_ENABLED = True
+
+# Fondy
+FONDY_MERCHANT_ID = os.getenv("FONDY_MERCHANT_ID", "")
+FONDY_MERCHANT_SECRET = os.getenv("FONDY_MERCHANT_SECRET", "")
+FONDY_CURRENCY = "USD"
+
+# CryptoBot
+CRYPTOBOT_TOKEN = os.getenv("CRYPTOBOT_TOKEN", "")  # токен бота @CryptoBot
+CRYPTOBOT_CURRENCY = "USDT"                         # или TON/USDT/USDC — на твой выбор
+#__________________________________________________________________________________
+
 # ——— Обязательная подписка ———
 CHANNEL_LINK     = "https://t.me/metaswarm_01"  
 CHANNEL_USERNAME = "metaswarm_01"               
