@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # подтягиваем Bot и путь вебхука из config
 bot = config.bot
 WEBHOOK_PATH = config.WEBHOOK_PATH
-DATABASE_URL = config.DATABASE_URL
+DATAWEBHOOK_URL = config.DATAWEBHOOK_URL
 
 app = FastAPI()
 
@@ -126,8 +126,8 @@ async def pay_fondy(order_id: str, amount: int, item: str):
         <input type="hidden" name="amount" value="{amount}">
         <input type="hidden" name="currency" value="{FONDY_CURRENCY}">
         <input type="hidden" name="order_desc" value="{item}">
-        <input type="hidden" name="server_callback_url" value="{BASE_URL}/webhook/fondy">
-        <input type="hidden" name="response_url" value="{BASE_URL}/payment/thanks">
+        <input type="hidden" name="server_callback_url" value="{config.WEBHOOK_URL}/webhook/fondy">
+        <input type="hidden" name="response_url" value="{config.WEBHOOK_URL}/payment/thanks">
         <input type="hidden" name="signature" value="{_fondy_signature({
             'merchant_id': int(FONDY_MERCHANT_ID),
             'order_id': order_id,
