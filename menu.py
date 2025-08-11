@@ -6,6 +6,7 @@ from config import COST_KLING_STD, COST_KLING_PRO, COST_KLING_MAST, COST_VEO, MA
 from typing import Tuple
 from db     import SessionLocal
 from db_utils import get_user
+from services.urls import build_urls_for_item
 
 # ——— CALLBACK_DATA КОНСТАНТЫ ———
 CB_MAIN            = "menu:main"
@@ -37,6 +38,53 @@ MODEL_MAP = {
     CB_GEN_KLING_MAST: "kling-master",
     CB_GEN_VEO:        "veo",
 }
+
+
+def _patch_payment_urls(user_id: int, kb_rows):
+    """Заменяет url='https://example.com' на живые ссылки под конкретный товар."""
+    # Пример: в MENUS у тебя есть экраны CB_SUB_3D, CB_SUB_MONTH, CB_SUB_YEAR,
+    # а также экраны с пакетами кредитов. Здесь по тексту/раскладке понимаем, что за товар.
+    patched = []
+    for row in kb_rows:
+        new_row = []
+        for btn in row:
+            if isinstance(btn, InlineKeyboardButton) and btn.url == "https://example.com":
+                # Определи item_kind/item_code из текста кнопки или текущего экрана
+                # Ниже пример для подписок:
+                label = (btn.text or "").lower()
+                if "3 дня" in label or "3-д" in label or "150 ⭐" in label or "1 $" in label:
+                    urls = build_urls_for_item(user_id, "sub", "day")
+                elif "месяч" in label or "1000 ⭐" in label or "10 $" in label:
+                    urls = build_urls_for_item(user_id, "sub", "month")
+                elif "год" in label or "8500 ⭐" in label or "85 $" in label:
+                    urls = build_urls_for_item(user_id, "sub", "year")
+                elif "standart" in label or "1000 ⭐" in label:
+                    urls = build_urls_for_item(user_id, "pack", "standard")
+                elif "pro" in label or "3000 ⭐" in label:
+                    urls = build_urls_for_item(user_id, "pack", "pro")
+                elif "max" in label or "5000 ⭐" in label:
+                    urls = build_urls_for_item(user_id, "pack", "max")
+                else:
+                    urls = None
+
+                # Подменяем ссылку по типу кнопки
+                if urls:
+                    if "stars" in label or "⭐" in label:
+                        new_row.append(InlineKeyboardButton(text=btn.text, url=urls["stars"]))
+                    elif "fondy" in label or "stripe" in label:
+                        new_row.append(InlineKeyboardButton(text=btn.text, url=urls["fondy"]))
+                    elif "crypto" in label:
+                        new_row.append(InlineKeyboardButton(text=btn.text, url=urls["cryptobot"]))
+                    else:
+                        # если не распознали — оставим как есть
+                        new_row.append(btn)
+                else:
+                    new_row.append(btn)
+            else:
+                new_row.append(btn)
+        patched.append(new_row)
+    return patched
+
 
 # ——— ОПИСАНИЕ ВСЕХ МЕНЮ ———
 MENUS = {
@@ -273,5 +321,12 @@ def render_menu(menu_key: str, user_id: int) -> Tuple[str, InlineKeyboardMarkup]
     text = text.replace("{bot_username}", config.bot.username)
 
     return text, markup
+
+# def render_menu(state_key, user_id, *args, **kwargs):
+#     text, markup = _render_menu_original(state_key, user_id, *args, **kwargs)  # твоя текущая функция
+#     # пост‑обработка ссылок
+#     kb_rows = markup.inline_keyboard
+#     patched_rows = _patch_payment_urls(user_id, kb_rows)
+#     return text, InlineKeyboardMarkup(patched_rows)
 
 
