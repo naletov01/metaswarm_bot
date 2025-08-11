@@ -22,9 +22,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://metaswarm-bot.onrender.com")
 
 #__________________________________________________________________________________
-BASE_URL = os.getenv("BASE_URL")  # публичный https-домен FastAPI
-SECRET_KEY = os.getenv("SECRET_KEY")   # для подписи payload
-
 # Платежи Stars (через Bot API) — провайдер-токен НЕ нужен для XTR invoice link
 STARS_ENABLED = True
 
