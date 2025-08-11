@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # подтягиваем Bot и путь вебхука из config
 bot = config.bot
 WEBHOOK_PATH = config.WEBHOOK_PATH
-DATAWEBHOOK_URL = config.DATAWEBHOOK_URL
+WEBHOOK_URL = config.WEBHOOK_URL
 
 app = FastAPI()
 
