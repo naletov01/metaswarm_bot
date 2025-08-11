@@ -13,7 +13,7 @@ from telegram.ext import (
     Filters, CallbackContext, CallbackQueryHandler)
 from handlers import (
     start, image_upload_handler, text_handler, menu_callback, 
-    on_check_sub, choose_model, profile, partner)
+    on_check_sub, choose_model, profile, partner, handle_successful_payment)
 from models import Payment, PaymentStatus
 from services.billing import finalize_success, compute_price
 from payments.fondy import _fondy_signature
@@ -92,6 +92,8 @@ dp.add_handler(CallbackQueryHandler(on_check_sub, pattern="^check_sub$"))
 img_filter = Filters.photo | (Filters.document & Filters.document.mime_type("image/*"))
 dp.add_handler(MessageHandler(img_filter, image_upload_handler))
 dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
+
+dp.add_handler(MessageHandler(Filters.successful_payment, handle_successful_payment))
 
 
 def error_handler(update, context):
