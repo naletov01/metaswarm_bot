@@ -316,17 +316,13 @@ def render_menu(menu_key: str, user_id: int) -> Tuple[str, InlineKeyboardMarkup]
     buttons = m["buttons"]
     markup = InlineKeyboardMarkup(buttons)
 
+    patched = _patch_payment_urls(user_id, markup.inline_keyboard)
+    markup = InlineKeyboardMarkup(patched)
+
     # Подставляем user_id и имя бота в текст
     text = m["text"].replace("{{user_id}}", str(user_id))
     text = text.replace("{bot_username}", config.bot.username)
 
     return text, markup
-
-# def render_menu(state_key, user_id, *args, **kwargs):
-#     text, markup = _render_menu_original(state_key, user_id, *args, **kwargs)  # твоя текущая функция
-#     # пост‑обработка ссылок
-#     kb_rows = markup.inline_keyboard
-#     patched_rows = _patch_payment_urls(user_id, kb_rows)
-#     return text, InlineKeyboardMarkup(patched_rows)
 
 
