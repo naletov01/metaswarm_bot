@@ -84,6 +84,17 @@ def handle_successful_payment(update: Update, context: CallbackContext):
             send_safe(context.bot, uid, "❌ Платёж отклонён. 3‑дневная подписка может быть куплена только один раз.")
 
 
+def precheckout_ok(update: Update, context: CallbackContext):
+    """Обязательный ack перед оплатой. Если не ответить ok=True — будет вечный спиннер."""
+    q = update.pre_checkout_query
+    try:
+        # тут можно дополнительно валидировать q.invoice_payload, если нужно
+        q.answer(ok=True)
+    except Exception as e:
+        logger.exception("precheckout error")
+        q.answer(ok=False, error_message="Payment temporarily unavailable. Try later.")
+
+
 # — Проверка и списание кредитов; возвращает (ok, message)
 def charge_credits(user: User, model_key: str, db: Session) -> Tuple[bool, Optional[str]]:
     """
