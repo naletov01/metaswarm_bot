@@ -34,7 +34,7 @@ class Payment(Base):
     user_id           = Column(BigInteger, index=True, nullable=False)
     method            = Column(String, nullable=False)      # 'stars' | 'fondy' | 'cryptobot'
     item_kind         = Column(String, nullable=False)      # 'sub' | 'pack'
-    item_code         = Column(String, nullable=False)      # 'day'|'month'|'year' или 'standard'|'pro'|'max'
+    item_code         = Column(String, nullable=False)      # 'day'|'month'|'year' или 'standart'|'pro'|'max'
     amount_usd        = Column(Numeric(10,2), nullable=True)
     amount_stars      = Column(Integer, nullable=True)
     external_id       = Column(String, nullable=True)       # id инвойса у провайдера
