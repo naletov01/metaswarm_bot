@@ -52,36 +52,38 @@ def send_safe(fn, *args, **kwargs) -> bool:
         return False
 
 
+# handlers.py
+from services.billing import finalize_success
+
 def handle_successful_payment(update: Update, context: CallbackContext):
     sp = update.message.successful_payment
-    payload = sp.invoice_payload  # там user_id:kind:code:stars
+    payload = sp.invoice_payload or ""
     try:
-        uid, kind, code, _ = payload.split(":")
-        uid = int(uid)
-    except Exception as e:
+        uid_s, kind, code, method = payload.split(":")
+        uid = int(uid_s)
+    except Exception:
         logger.exception("Bad payload in successful_payment: %s", payload)
         return
 
     with SessionLocal() as db:
-        # найдём последний черновик под этот payload
         p = db.query(Payment).filter(
-            Payment.user_id==uid,
-            Payment.item_kind==kind,
-            Payment.item_code==code,
-            Payment.method=="stars",
-            Payment.status.in_(["created", "pending"])
+            Payment.user_id == uid,
+            Payment.item_kind == kind,
+            Payment.item_code == code,
+            Payment.method == method,
+            Payment.status.in_([PaymentStatus.created, PaymentStatus.pending])
         ).order_by(Payment.created_at.desc()).first()
 
         if not p:
             logger.warning("No draft payment for payload=%s", payload)
+            send_safe(context.bot.send_message, uid, "Мы получили оплату, но не нашли заявку. Напишите /start.")
             return
 
-        # Отметим success и начислим
         ok = finalize_success(db, p)
         if ok:
             send_safe(context.bot.send_message, uid, "✅ Оплата прошла успешно. Начисления выполнены.")
         else:
-            send_safe(context.bot.send_message, uid, "❌ Платёж отклонён. 3‑дневная подписка может быть куплена только один раз.")
+            send_safe(context.bot.send_message, uid, "❌ Платёж отклонён. 3-дневная подписка доступна только один раз.")
 
 
 def precheckout_ok(update: Update, context: CallbackContext):
