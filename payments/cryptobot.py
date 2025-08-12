@@ -1,6 +1,5 @@
 # payments/cryptobot.py
 
-import requests
 import logging, json, requests
 from config import CRYPTOBOT_TOKEN, CRYPTOBOT_FIAT, CRYPTOBOT_ACCEPTED_ASSETS, WEBHOOK_URL
 from services.billing import compute_price
@@ -12,29 +11,6 @@ import json
 
 logger = logging.getLogger(__name__)
 API = "https://pay.crypt.bot/api"
-
-
-def ensure_cryptobot_webhook():
-    logger = logging.getLogger("pay.cryptobot")
-    if not CRYPTOBOT_TOKEN:
-        logger.info("[WEBHOOK][SKIP] No CRYPTOBOT_TOKEN")
-        return
-
-    url = f"{WEBHOOK_URL.rstrip('/')}/webhook/cryptobot"
-    headers = {"Crypto-Pay-API-Token": CRYPTOBOT_TOKEN, "Content-Type": "application/json"}
-    body = {"webhook_url": url}
-
-    try:
-        r = requests.post(f"{API}/setWebhook", headers=headers, data=json.dumps(body), timeout=10)
-        logger.debug("[WEBHOOK][SET] status=%s body=%s", r.status_code, (r.text[:800] if r.text else ""))
-        r.raise_for_status()
-        ok = (r.json() or {}).get("ok")
-        if ok:
-            logger.info("[WEBHOOK][SET_OK] %s", url)
-        else:
-            logger.warning("[WEBHOOK][SET_FAIL] %s", r.text)
-    except Exception:
-        logger.exception("[WEBHOOK][SET_ERROR]")
 
 
 def build_cryptobot_link(user_id: int, item_kind: str, item_code: str) -> str:
