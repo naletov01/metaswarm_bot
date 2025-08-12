@@ -32,6 +32,10 @@ def create_payment(user_id, method, item_kind, item_code, amount_usd, amount_sta
         )
         db.add(p)
         db.commit()
+        logging.getLogger(__name__).info(
+            "[PAY][DB][CREATE] uid=%s method=%s kind=%s code=%s amount_usd=%s amount_stars=%s external_id=%s id=%s",
+            user_id, method, item_kind, item_code, amount_usd, amount_stars, external_id, p.id
+        )
 
 
 def mark_payment_success(db, payment_id):
@@ -39,6 +43,7 @@ def mark_payment_success(db, payment_id):
     if not p: return
     p.status = PaymentStatus.success
     db.commit()
+    logging.getLogger(__name__).info("[PAY][DB][SUCCESS] id=%s uid=%s", p.id, p.user_id)
 
 
 def mark_payment_failed(db, payment_id, reason=""):
@@ -47,6 +52,7 @@ def mark_payment_failed(db, payment_id, reason=""):
     p.status = PaymentStatus.failed
     p.error = (reason or "")[:500]
     db.commit()
+    logging.getLogger(__name__).info("[PAY][DB][FAILED] id=%s uid=%s reason=%s", p.id, p.user_id, reason)
 
 
 # db_utils.py — ДОПОЛНЕНИЯ (оставь твой get_user как есть)
