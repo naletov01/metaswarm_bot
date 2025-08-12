@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 import base64, hmac, hashlib
 from payments.stars import build_stars_invoice_link
+from payments.cryptobot import ensure_cryptobot_webhook
 
 
 # ——— Настройка логирования ———
@@ -94,6 +95,11 @@ async def startup():
     except Exception:
         logger.exception("Webhook setup failed")
         raise
+    # 3) Вызов вебхука cryptobot
+    try:
+        await to_thread.run_sync(ensure_cryptobot_webhook)
+    except Exception:
+        logging.getLogger("pay.cryptobot").exception("[WEBHOOK][INIT_ERROR]")
 
 
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
