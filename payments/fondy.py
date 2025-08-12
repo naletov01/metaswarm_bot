@@ -25,6 +25,9 @@ def build_fondy_link(user_id: int, item_kind: str, item_code: str):
     order_id = f"{user_id}-{item_kind}-{item_code}-{uuid.uuid4().hex[:8]}"
     amount_cents = int(float(usd) * 100)
 
+    logger.info("[CREATE] uid=%s kind=%s code=%s usd=%.2f amount_cents=%s order_id=%s",
+                user_id, item_kind, item_code, float(usd), amount_cents, order_id)
+
     payload = {
         "merchant_id": int(FONDY_MERCHANT_ID),
         "order_id": order_id,
@@ -51,5 +54,7 @@ def build_fondy_link(user_id: int, item_kind: str, item_code: str):
 
     # Возвращаем ссылку на шлюз (redirect POST/GET).
     # Удобно: вернём наш REST-роут /pay/fondy, который сделает 307 POST к FONDY
-    return f"{WEBHOOK_URL}/pay/fondy?order_id={order_id}&amount={amount_cents}&item={item_kind}:{item_code}"
+    url = f"{WEBHOOK_URL}/pay/fondy?order_id={order_id}&amount={amount_cents}&item={item_kind}:{item_code}"
+    logger.info("[LINK] uid=%s order_id=%s url=%s", user_id, order_id, url)
+    return url
 
