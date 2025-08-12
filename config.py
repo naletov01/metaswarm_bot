@@ -97,7 +97,7 @@ SUB_PERIOD_DAYS = {
 
 # Пакеты кредитов (цена в $, кредиты)
 PACKAGE_OPTIONS = {
-    'standard': {'price_usd': 10, 'credits': 800},
+    'standart': {'price_usd': 10, 'credits': 800},
     'pro':      {'price_usd': 30, 'credits': 3000},
     'max':      {'price_usd': 50, 'credits': 6000},
 }
@@ -107,7 +107,7 @@ BONUS_PER_INVITE = 30   # за каждые 5 приглашённых
 MAX_INVITES      = 10     # максимум друзей
 
 COSTS = {
-    'kling-standard': COST_KLING_STD,
+    'kling-standart': COST_KLING_STD,
     'kling-pro':      COST_KLING_PRO,
     'kling-master':   COST_KLING_MAST,
     'veo':            COST_VEO,
