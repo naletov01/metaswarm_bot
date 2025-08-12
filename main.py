@@ -3,7 +3,10 @@
 import logging, json, os
 from anyio import to_thread
 from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+import base64, hmac, hashlib
+from payments.stars import build_stars_invoice_link
+
 
 # ——— Настройка логирования ———
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -33,6 +36,7 @@ from handlers import (
 from models import Payment, PaymentStatus
 from services.billing import finalize_success, compute_price
 from payments.fondy import _fondy_signature
+from payments.cryptobot import build_cryptobot_link
 
 logging.basicConfig(
     level=logging.INFO,
@@ -48,6 +52,20 @@ WEBHOOK_PATH = config.WEBHOOK_PATH
 WEBHOOK_URL = config.WEBHOOK_URL
 
 app = FastAPI()
+
+
+def _decode_signed_data(data_b64: str) -> dict:
+    """Декодируем data из build_urls_for_item(...) и проверяем HMAC-подпись."""
+    raw = base64.urlsafe_b64decode(data_b64.encode()).decode()
+    obj = json.loads(raw)
+    sig = obj.pop("sig", None)
+    raw2 = json.dumps(obj, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    exp = base64.urlsafe_b64encode(
+        hmac.new(config.WEBHOOK_SECRET.encode("utf-8"), raw2, hashlib.sha256).digest()
+    ).decode("utf-8")
+    if sig != exp:
+        raise HTTPException(400, "Bad signature")
+    return obj  # {"uid":..., "kind":..., "code":...}
 
 
 @app.on_event("startup")
@@ -76,16 +94,6 @@ async def startup():
     except Exception:
         logger.exception("Webhook setup failed")
         raise
-
-# # main.py (startup)
-# @app.on_event("startup")
-# def startup():
-#     Base.metadata.create_all(bind=engine)
-#     from db import ensure_bigint_ids
-#     try:
-#         ensure_bigint_ids()
-#     except Exception:
-#         logger.exception("ensure_bigint_ids failed")  # не падаем на старте
 
 
 dp = Dispatcher(bot=bot, update_queue=None, use_context=True)
@@ -131,6 +139,28 @@ async def telegram_webhook(request: Request, db=Depends(get_db)):
 @app.head("/")
 def root():
     return {"status": "Bot is running"}
+
+
+@app.get("/pay/stars")
+async def pay_stars(data: str):
+    try:
+        payload = _decode_signed_data(data)
+    except Exception:
+        logging.getLogger("payments.stars").exception("[REDIRECT][BAD_DATA]")
+        raise
+
+    uid  = int(payload["uid"])
+    kind = payload["kind"]
+    code = payload["code"]
+    logging.getLogger("payments.stars").info("[REDIRECT] uid=%s kind=%s code=%s", uid, kind, code)
+
+    try:
+        link = build_stars_invoice_link(uid, kind, code)  # тут уже создаётся инвойс и draft
+    except Exception:
+        logging.getLogger("payments.stars").exception("[CREATE_LINK_ERROR] uid=%s kind=%s code=%s", uid, kind, code)
+        raise HTTPException(502, "Stars error")
+
+    return RedirectResponse(link, status_code=307)
 
 
 @app.get("/pay/fondy")
@@ -227,6 +257,29 @@ async def webhook_fondy(request: Request):
             mark_payment_failed(db, p.id, f"Fondy status={status}")
             log_fondy.info("[WEBHOOK][DECLINED] id=%s status=%s", p.id, status)
             return JSONResponse({"ok": True})
+
+
+@app.get("/pay/cryptobot")
+async def pay_cryptobot(data: str):
+    try:
+        payload = _decode_signed_data(data)
+    except Exception:
+        log_crypto.exception("[REDIRECT][BAD_DATA]")
+        raise
+
+    uid  = int(payload["uid"])
+    kind = payload["kind"]
+    code = payload["code"]
+    log_crypto.info("[REDIRECT] uid=%s kind=%s code=%s", uid, kind, code)
+
+    try:
+        pay_url = build_cryptobot_link(uid, kind, code)  # создаёт draft в payments и возвращает внешнюю ссылку
+    except Exception:
+        log_crypto.exception("[CREATE_INVOICE_ERROR] uid=%s kind=%s code=%s", uid, kind, code)
+        raise HTTPException(502, "CryptoBot error")
+
+    log_crypto.info("[REDIRECT->CRYPTOBOT] uid=%s url=%s", uid, pay_url)
+    return RedirectResponse(pay_url, status_code=307)
 
 
 @app.post("/webhook/cryptobot")
