@@ -58,7 +58,7 @@ def _patch_payment_urls(user_id: int, kb_rows):
                     urls = build_urls_for_item(user_id, "sub", "month")
                 elif "год" in label or "8500 ⭐" in label or "85 $" in label:
                     urls = build_urls_for_item(user_id, "sub", "year")
-                elif "standart" in label or "1000 ⭐" in label:
+                elif "standart" in label or "999 ⭐" in label:
                     urls = build_urls_for_item(user_id, "pack", "standart")
                 elif "pro" in label or "3000 ⭐" in label:
                     urls = build_urls_for_item(user_id, "pack", "pro")
@@ -243,7 +243,7 @@ MENUS = {
     CB_CRED_STD: {
         "text": "💰 <b>Пакет Standart</b>\n\nВыберите метод оплаты:",
         "buttons": [
-            [ InlineKeyboardButton("TG Stars | 1000 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 999 ⭐", url="https://example.com") ],
             [ InlineKeyboardButton("Stripe | 10 $",      url="https://example.com") ],
             [ InlineKeyboardButton("Crypto | 10 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_BUY_CREDITS) ],
