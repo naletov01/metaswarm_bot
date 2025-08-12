@@ -57,30 +57,27 @@ def _patch_payment_urls(user_id: int, kb_rows, menu_key: str):
     """
     kind_code = MENU_ITEM_BY_KEY.get(menu_key)
     
-    if not kind_code:
-        logging.getLogger(__name__).debug("No mapping for menu_key=%r", menu_key)
-
-        patched = []
+    patched = []
         
-        for row in kb_rows:
-            new_row = []
-            for btn in row:
-                if isinstance(btn, InlineKeyboardButton) and getattr(btn, "url", None) == "https://example.com" and kind_code:
-                    urls = build_urls_for_item(user_id, kind_code[0], kind_code[1])
+    for row in kb_rows:
+        new_row = []
+        for btn in row:
+            if isinstance(btn, InlineKeyboardButton) and getattr(btn, "url", None) == "https://example.com" and kind_code:
+                urls = build_urls_for_item(user_id, kind_code[0], kind_code[1])
     
-                    label = (btn.text or "").lower()
-                    # выбор способа оплаты по тексту кнопки
-                    if "stars" in label or "⭐" in label:
-                        new_row.append(InlineKeyboardButton(text=btn.text, url=urls["stars"]))
-                    elif "crypto" in label:
-                        new_row.append(InlineKeyboardButton(text=btn.text, url=urls["cryptobot"]))
-                    else:
-                        # всё карточное (Stripe/Fondy/Visa/Mastercard) — ведём на наш Fondy-роут
-                        new_row.append(InlineKeyboardButton(text=btn.text, url=urls["fondy"]))
+                label = (btn.text or "").lower()
+                # выбор способа оплаты по тексту кнопки
+                if "stars" in label or "⭐" in label:
+                     new_row.append(InlineKeyboardButton(text=btn.text, url=urls["stars"]))
+                elif "crypto" in label:
+                     new_row.append(InlineKeyboardButton(text=btn.text, url=urls["cryptobot"]))
                 else:
-                    new_row.append(btn)
-            patched.append(new_row)
-        return patched
+                     # всё карточное (Stripe/Fondy/Visa/Mastercard) — ведём на наш Fondy-роут
+                    new_row.append(InlineKeyboardButton(text=btn.text, url=urls["fondy"]))
+            else:
+                new_row.append(btn)
+        patched.append(new_row)
+    return patched
 
 
 # ——— ОПИСАНИЕ ВСЕХ МЕНЮ ———
