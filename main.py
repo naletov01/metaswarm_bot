@@ -296,13 +296,41 @@ async def webhook_cryptobot(request: Request):
     except Exception:
         log_crypto.warning("[WEBHOOK][RAW_LOG_FAIL]")
 
-    event = body.get("update_type")
-    if event != "invoice_paid":
-        log_crypto.info("[WEBHOOK][SKIP] update_type=%s", event)
+    if body.get("update_type") != "invoice_paid":
+        log_crypto.info("[WEBHOOK][SKIP] update_type=%s", body.get("update_type"))
         return JSONResponse({"ok": True})
 
-    inv = body.get("invoice_paid") or {}
-    invoice_id = str(inv.get("invoice_id"))
+    # --- Универсальный разбор invoice_id из нескольких возможных форматов CryptoBot ---
+    invoice_id = None
+
+    # Вариант 1: классический JSON {"invoice_paid": {"invoice_id": ...}}
+    inv = body.get("invoice_paid")
+    if isinstance(inv, dict):
+        invoice_id = inv.get("invoice_id") or inv.get("id")
+
+    # Вариант 2: приходит в поле "payload" (строкой или dict)
+    if not invoice_id:
+        pl = body.get("payload")
+        if isinstance(pl, dict):
+            invoice_id = pl.get("invoice_id") or pl.get("id")
+        elif isinstance(pl, str):
+            # payload у тебя в логах выглядит как строка с одинарными кавычками → пробуем оба парсера
+            try:
+                d = json.loads(pl)
+            except Exception:
+                import ast
+                try:
+                    d = ast.literal_eval(pl)
+                except Exception:
+                    d = None
+            if isinstance(d, dict):
+                invoice_id = d.get("invoice_id") or d.get("id")
+
+    if not invoice_id:
+        log_crypto.error("[WEBHOOK][NOT_FOUND] invoice_id=None keys=%s", list(body.keys()))
+        return JSONResponse({"ok": True})
+
+    invoice_id = str(invoice_id)
 
     with SessionLocal() as db:
         p = db.query(Payment).filter(Payment.external_id == invoice_id).first()
@@ -323,7 +351,25 @@ async def webhook_cryptobot(request: Request):
             log_crypto.info("[FINALIZE][FAILED] id=%s uid=%s", p.id, p.user_id)
             from handlers import send_safe
             send_safe(bot.send_message, p.user_id, "❌ Платёж отклонён.")
+
     return JSONResponse({"ok": True})
+
+    
+@app.get("/payment/thanks")
+async def payment_thanks():
+    # Можно редиректить обратно в бота:
+    bot_username = getattr(config.bot, "username", "Bot")
+    html = f"""
+    <html>
+      <head><meta charset="utf-8"><title>Оплата</title></head>
+      <body style="font-family:system-ui, sans-serif; text-align:center; padding:40px;">
+        <h2>✅ Спасибо! Если оплата уже прошла, проверяйте сообщения в боте.</h2>
+        <p><a href="https://t.me/{bot_username}">Вернуться в бота @{bot_username}</a></p>
+      </body>
+    </html>
+    """
+    return HTMLResponse(html)
+
 
 
 
