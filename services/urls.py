@@ -17,8 +17,10 @@ def build_urls_for_item(user_id: int, item_kind: str, item_code: str):
     token = _sign(payload)
     payload["sig"] = token
 
+    # было (создавало инвойс заранее — так больше не делаем):
+    # stars_url = build_stars_invoice_link(user_id, item_kind, item_code)
     # Stars — создаём invoice-link сразу
-    stars_url = build_stars_invoice_link(user_id, item_kind, item_code)
+    stars_url = f"{WEBHOOK_URL}/pay/stars?data={base64.urlsafe_b64encode(json.dumps(payload).encode()).decode()}"
 
     # Fondy / CryptoBot — отдадим внешнюю ссылку на наш backend,
     # он выдаст редирект на реальный инвойс и зафиксирует payment.created
