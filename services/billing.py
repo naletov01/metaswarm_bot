@@ -18,8 +18,12 @@ def compute_price(item_kind: str, item_code: str):
         return USD_PRICE_BY_SUB[item_code], STARS_PRICE_BY_SUB[item_code]
     else:
         return USD_PRICE_BY_PACK[item_code], STARS_PRICE_BY_PACK[item_code]
+        
+    logger.debug("[PAY][PRICE] kind=%s code=%s usd=%s stars=%s", item_kind, item_code, usd, stars)
+    return usd, stars
 
 def grant_benefit(db: Session, user_id: int, item_kind: str, item_code: str):
+    logger.info("[PAY][GRANT] uid=%s kind=%s code=%s", user_id, item_kind, item_code)
     """Начисление после успешной оплаты."""
     if item_kind == 'sub':
         # одноразовость 'day'
@@ -32,13 +36,14 @@ def grant_benefit(db: Session, user_id: int, item_kind: str, item_code: str):
                 Payment.status==PaymentStatus.success
             ).first()
             if prev:
-                logger.info(f"[{user_id}] попытка повторной 3-дн подписки — блокируем")
+                logger.info("[PAY][GRANT][BLOCK] uid=%s reason=day_already_used", user_id)
                 return False
 
         days = SUB_PERIOD_DAYS[item_code]
         credits = SUB_CREDITS[item_code]
         expires_at = datetime.utcnow() + timedelta(days=days)
         set_user_subscription(db, user_id, sub_type=item_code, expires_at=expires_at, add_credits=credits)
+        logger.info("[PAY][GRANT][SUB_OK] uid=%s days=%s credits=%s", user_id, days, credits)
         return True
 
     elif item_kind == 'pack':
@@ -48,11 +53,15 @@ def grant_benefit(db: Session, user_id: int, item_kind: str, item_code: str):
             'max': 6000,
         }[item_code]
         update_user_credits(db, user_id, delta=add_credits)
+        logger.info("[PAY][GRANT][PACK_OK] uid=%s add_credits=%s", user_id, add_credits)
         return True
 
+    logger.warning("[PAY][GRANT][UNKNOWN] uid=%s kind=%s code=%s", user_id, item_kind, item_code)
     return False
 
 def finalize_success(db: Session, payment: Payment):
+    logger.info("[PAY][FINALIZE] id=%s uid=%s kind=%s code=%s method=%s",
+                payment.id, payment.user_id, payment.item_kind, payment.item_code, payment.method)
     ok = grant_benefit(db, payment.user_id, payment.item_kind, payment.item_code)
     if not ok:
         # если не начислили из-за повторной 3-дн подписки — пометим fail
