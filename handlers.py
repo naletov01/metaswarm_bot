@@ -12,7 +12,7 @@ from telegram.ext import CallbackContext
 from telegram.error import Unauthorized, BadRequest, TimedOut, RetryAfter, NetworkError
 from models import User
 from db import SessionLocal
-from db_utils import get_user, mark_payment_failed
+from db_utils import get_user
 
 from menu import CB_MAIN, CB_GENERATION, CB_PROFILE, CB_PARTNER 
 from menu import CB_GEN_VEO, MODEL_MAP, get_profile_text, render_menu
@@ -108,17 +108,7 @@ def precheckout_ok(update: Update, context: CallbackContext):
                 Payment.item_code == "day",
                 Payment.status == PaymentStatus.success
             ).first()
-            if paid:
-                # пометим последний черновик как failed (если он был создан ссылкой)
-                draft = db.query(Payment).filter(
-                    Payment.user_id == uid,
-                    Payment.item_kind == "sub",
-                    Payment.item_code == "day",
-                    Payment.method == method,
-                    Payment.status.in_([PaymentStatus.created, PaymentStatus.pending])
-                ).order_by(Payment.created_at.desc()).first()
-                if draft:
-                    mark_payment_failed(db, draft.id, "precheckout blocked: day already used")
+            if prev:
                 q.answer(ok=False, error_message="3-дневная подписка доступна только один раз.")
                 return
 
