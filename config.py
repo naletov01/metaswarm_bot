@@ -32,7 +32,9 @@ FONDY_CURRENCY = "USD"
 
 # CryptoBot
 CRYPTOBOT_TOKEN = os.getenv("CRYPTOBOT_TOKEN")  # токен бота @CryptoBot
-CRYPTOBOT_CURRENCY = "USDT"                         # или TON/USDT/USDC — на твой выбор
+CRYPTOBOT_ACCEPTED_ASSETS = os.getenv("CRYPTOBOT_ACCEPTED_ASSETS")
+CRYPTOBOT_FIAT = os.getenv("CRYPTOBOT_FIAT", "USD")
+# CRYPTOBOT_CURRENCY = "USDT"
 #__________________________________________________________________________________
 
 # ——— Обязательная подписка ———
