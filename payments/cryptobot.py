@@ -24,22 +24,31 @@ def build_cryptobot_link(user_id: int, item_kind: str, item_code: str) -> str:
         "expires_in": 1200  # 20 мин
     }
     headers = {"Crypto-Pay-API-Token": CRYPTOBOT_TOKEN, "Content-Type": "application/json"}
-    r = requests.post(f"{API}/createInvoice", data=json.dumps(payload), headers=headers, timeout=10)
-    r.raise_for_status()
-    data = r.json()["result"]
+    logger.info("[CREATE] uid=%s kind=%s code=%s usd=%.2f", user_id, item_kind, item_code, amount)
 
-    # Записываем платеж (draft)
-    create_payment(
-        user_id=user_id,
-        method="cryptobot",
-        item_kind=item_kind,
-        item_code=item_code,
-        amount_usd=usd,
-        amount_stars=None,
-        external_id=str(data["invoice_id"]),
-        payload="cryptobot",
-        status=PaymentStatus.created
-    )
+    try:
+        r = requests.post(f"{API}/createInvoice", data=json.dumps(payload), headers=headers, timeout=10)
+        logger.debug("[HTTP] status=%s body=%s", r.status_code, (r.text[:800] if r.text else ""))
+        r.raise_for_status()
+        data = r.json()["result"]
+        invoice_id = str(data.get("invoice_id"))
+        pay_url = data.get("pay_url")
 
-    return data["pay_url"]  # внешняя ссылка на оплату
+        # Записываем платеж (draft)
+        create_payment(
+            user_id=user_id,
+            method="cryptobot",
+            item_kind=item_kind,
+            item_code=item_code,
+            amount_usd=usd,
+            amount_stars=None,
+            external_id=str(data["invoice_id"]),
+            payload="cryptobot",
+            status=PaymentStatus.created
+        )
+        logger.info("[LINK] uid=%s invoice_id=%s url=%s", user_id, invoice_id, pay_url)
+        return pay_url
+    except Exception as e:
+        logger.exception("[ERROR] createInvoice failed")
+        return f"{WEBHOOK_URL}/payment/error"
 
