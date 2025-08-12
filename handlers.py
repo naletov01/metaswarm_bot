@@ -65,9 +65,6 @@ def handle_successful_payment(update: Update, context: CallbackContext):
         logger.exception("Bad payload in successful_payment: %s", payload)
         return
 
-    if method != "stars":
-        return
-
     with SessionLocal() as db:
         p = db.query(Payment).filter(
             Payment.user_id == uid,
@@ -113,6 +110,7 @@ def precheckout_ok(update: Update, context: CallbackContext):
                 return
 
     q.answer(ok=True)
+
 
 
 # — Проверка и списание кредитов; возвращает (ok, message)
