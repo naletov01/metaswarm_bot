@@ -79,9 +79,9 @@ def handle_successful_payment(update: Update, context: CallbackContext):
         # Отметим success и начислим
         ok = finalize_success(db, p)
         if ok:
-            send_safe(context.bot, uid, "✅ Оплата в Звёздах прошла успешно. Начисления выполнены.")
+            send_safe(context.bot.send_message, uid, "✅ Оплата прошла успешно. Начисления выполнены.")
         else:
-            send_safe(context.bot, uid, "❌ Платёж отклонён. 3‑дневная подписка может быть куплена только один раз.")
+            send_safe(context.bot.send_message, uid, "❌ Платёж отклонён. 3‑дневная подписка может быть куплена только один раз.")
 
 
 def precheckout_ok(update: Update, context: CallbackContext):
