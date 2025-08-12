@@ -10,10 +10,14 @@ import config
 import handlers
 from telegram.ext import (
     Dispatcher, CommandHandler, MessageHandler,
-    Filters, CallbackContext, CallbackQueryHandler)
+    Filters, CallbackContext, CallbackQueryHandler,
+    PreCheckoutQueryHandler
+    )
 from handlers import (
     start, image_upload_handler, text_handler, menu_callback, 
-    on_check_sub, choose_model, profile, partner, handle_successful_payment)
+    on_check_sub, choose_model, profile, partner, handle_successful_payment,
+    precheckout_ok
+    )
 from models import Payment, PaymentStatus
 from services.billing import finalize_success, compute_price
 from payments.fondy import _fondy_signature
@@ -93,6 +97,7 @@ img_filter = Filters.photo | (Filters.document & Filters.document.mime_type("ima
 dp.add_handler(MessageHandler(img_filter, image_upload_handler))
 dp.add_handler(MessageHandler(Filters.text & ~Filters.command, text_handler))
 
+dp.add_handler(PreCheckoutQueryHandler(precheckout_ok))
 dp.add_handler(MessageHandler(Filters.successful_payment, handle_successful_payment))
 
 
