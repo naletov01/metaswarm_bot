@@ -27,7 +27,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from typing import Tuple, Optional
 
 from services.billing import finalize_success
-from models import Payment
+from models import Payment, PaymentStatus
 import logging
 
 
@@ -85,14 +85,29 @@ def handle_successful_payment(update: Update, context: CallbackContext):
 
 
 def precheckout_ok(update: Update, context: CallbackContext):
-    """Обязательный ack перед оплатой. Если не ответить ok=True — будет вечный спиннер."""
     q = update.pre_checkout_query
+    payload = q.invoice_payload or ""
     try:
-        # тут можно дополнительно валидировать q.invoice_payload, если нужно
-        q.answer(ok=True)
-    except Exception as e:
-        logger.exception("precheckout error")
-        q.answer(ok=False, error_message="Payment temporarily unavailable. Try later.")
+        uid_s, kind, code, method = payload.split(":")
+        uid = int(uid_s)
+    except Exception:
+        q.answer(ok=False, error_message="Bad invoice payload")
+        return
+
+    # запрещаем повторную 'day' ещё до списания средств
+    if kind == "sub" and code == "day":
+        with SessionLocal() as db:
+            prev = db.query(Payment).filter(
+                Payment.user_id == uid,
+                Payment.item_kind == "sub",
+                Payment.item_code == "day",
+                Payment.status == PaymentStatus.success
+            ).first()
+            if prev:
+                q.answer(ok=False, error_message="3-дневная подписка доступна только один раз.")
+                return
+
+    q.answer(ok=True)
 
 
 # — Проверка и списание кредитов; возвращает (ok, message)
