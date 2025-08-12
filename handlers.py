@@ -40,6 +40,7 @@ def send_safe(fn, *args, **kwargs) -> bool:
         return True
     except Unauthorized:
         # пользователь заблокировал бота/удалил чат — молча игнорим
+        logging.getLogger(__name__).info("[SEND_SAFE] Unauthorized (user blocked), args=%s", args[:2])
         return False
     except RetryAfter as e:
         time.sleep(e.retry_after)
@@ -47,8 +48,13 @@ def send_safe(fn, *args, **kwargs) -> bool:
             fn(*args, **kwargs)
             return True
         except Exception:
+            logging.getLogger(__name__).exception("[SEND_SAFE] Retry failed")
             return False
-    except (BadRequest, TimedOut, NetworkError):
+    except (BadRequest, TimedOut, NetworkError) as e:
+        logging.getLogger(__name__).warning("[SEND_SAFE] %s", repr(e))
+        return False
+    except Exception:
+        logging.getLogger(__name__).exception("[SEND_SAFE] Unexpected error")
         return False
 
 
