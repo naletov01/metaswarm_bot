@@ -52,40 +52,6 @@ def send_safe(fn, *args, **kwargs) -> bool:
         return False
 
 
-# handlers.py
-from services.billing import finalize_success
-
-def handle_successful_payment(update: Update, context: CallbackContext):
-    sp = update.message.successful_payment
-    payload = sp.invoice_payload or ""
-    try:
-        uid_s, kind, code, method = payload.split(":")
-        uid = int(uid_s)
-    except Exception:
-        logger.exception("Bad payload in successful_payment: %s", payload)
-        return
-
-    with SessionLocal() as db:
-        p = db.query(Payment).filter(
-            Payment.user_id == uid,
-            Payment.item_kind == kind,
-            Payment.item_code == code,
-            Payment.method == method,
-            Payment.status.in_([PaymentStatus.created, PaymentStatus.pending])
-        ).order_by(Payment.created_at.desc()).first()
-
-        if not p:
-            logger.warning("No draft payment for payload=%s", payload)
-            send_safe(context.bot.send_message, uid, "Мы получили оплату, но не нашли заявку. Напишите /start.")
-            return
-
-        ok = finalize_success(db, p)
-        if ok:
-            send_safe(context.bot.send_message, uid, "✅ Оплата прошла успешно. Начисления выполнены.")
-        else:
-            send_safe(context.bot.send_message, uid, "❌ Платёж отклонён. 3-дневная подписка доступна только один раз.")
-
-
 def precheckout_ok(update: Update, context: CallbackContext):
     q = update.pre_checkout_query
     payload = q.invoice_payload or ""
@@ -93,8 +59,11 @@ def precheckout_ok(update: Update, context: CallbackContext):
         uid_s, kind, code, method = payload.split(":")
         uid = int(uid_s)
     except Exception:
+        logger.exception("[PAY][PRECHECKOUT][BAD_PAYLOAD] payload=%s", payload)
         q.answer(ok=False, error_message="Bad invoice payload")
         return
+
+    logger.info("[PAY][PRECHECKOUT] uid=%s kind=%s code=%s method=%s", uid, kind, code, method)
 
     # запрещаем повторную 'day' ещё до списания средств
     if kind == "sub" and code == "day":
@@ -106,11 +75,46 @@ def precheckout_ok(update: Update, context: CallbackContext):
                 Payment.status == PaymentStatus.success
             ).first()
             if prev:
+                logger.info("[PAY][PRECHECKOUT][BLOCK] uid=%s reason=day_already_used", uid)
                 q.answer(ok=False, error_message="3-дневная подписка доступна только один раз.")
                 return
-
+                
     q.answer(ok=True)
+      
 
+def handle_successful_payment(update: Update, context: CallbackContext):
+    sp = update.message.successful_payment
+    payload = sp.invoice_payload or ""
+    try:
+        uid_s, kind, code, method = payload.split(":")
+        uid = int(uid_s)
+    except Exception:
+        logger.exception("[PAY][SUCCESS][BAD_PAYLOAD] payload=%s", payload)
+        return
+
+    logger.info("[PAY][SUCCESS][STARS] uid=%s kind=%s code=%s", uid, kind, code)
+
+    with SessionLocal() as db:
+        p = db.query(Payment).filter(
+            Payment.user_id == uid,
+            Payment.item_kind == kind,
+            Payment.item_code == code,
+            Payment.method == method,
+            Payment.status.in_([PaymentStatus.created, PaymentStatus.pending])
+        ).order_by(Payment.created_at.desc()).first()
+
+        if not p:
+            logger.warning("[PAY][SUCCESS][NO_DRAFT] uid=%s payload=%s", uid, payload)
+            send_safe(context.bot.send_message, uid, "Мы получили оплату, но не нашли заявку. Напишите /start.")
+            return
+
+        ok = finalize_success(db, p)
+        if ok:
+            logger.info("[PAY][FINALIZED] id=%s uid=%s method=stars status=success", p.id, uid)
+            send_safe(context.bot.send_message, uid, "✅ Оплата прошла успешно. Начисления выполнены.")
+        else:
+            logger.info("[PAY][FINALIZED] id=%s uid=%s method=stars status=failed reason=day_once_only", p.id, uid)
+            send_safe(context.bot.send_message, uid, "❌ Платёж отклонён. 3-дневная подписка доступна только один раз.")
 
 
 # — Проверка и списание кредитов; возвращает (ok, message)
