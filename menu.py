@@ -27,13 +27,13 @@ CB_CRED_PRO        = "menu:cred_pro"
 CB_CRED_MAX        = "menu:cred_max"
 
 # ——— CALLBACK_DATA ДЛЯ ГЕНЕРАЦИИ ———
-CB_GEN_KLING_STD   = "gen:kling_standard"
+CB_GEN_KLING_STD   = "gen:kling_standart"
 CB_GEN_KLING_PRO   = "gen:kling_pro"
 CB_GEN_KLING_MAST  = "gen:kling_master"
 CB_GEN_VEO         = "gen:veo"
 
 MODEL_MAP = {
-    CB_GEN_KLING_STD:  "kling-standard",
+    CB_GEN_KLING_STD:  "kling-standart",
     CB_GEN_KLING_PRO:  "kling-pro",
     CB_GEN_KLING_MAST: "kling-master",
     CB_GEN_VEO:        "veo",
@@ -59,7 +59,7 @@ def _patch_payment_urls(user_id: int, kb_rows):
                 elif "год" in label or "8500 ⭐" in label or "85 $" in label:
                     urls = build_urls_for_item(user_id, "sub", "year")
                 elif "standart" in label or "1000 ⭐" in label:
-                    urls = build_urls_for_item(user_id, "pack", "standard")
+                    urls = build_urls_for_item(user_id, "pack", "standart")
                 elif "pro" in label or "3000 ⭐" in label:
                     urls = build_urls_for_item(user_id, "pack", "pro")
                 elif "max" in label or "5000 ⭐" in label:
