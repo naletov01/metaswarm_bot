@@ -8,10 +8,10 @@ from db_utils import get_user, update_user_credits, set_user_subscription, creat
 logger = logging.getLogger(__name__)
 
 # Стоимость в $ и в звёздах
-USD_PRICE_BY_SUB = {'day': 1, 'month': 10, 'year': 85}
+USD_PRICE_BY_SUB = {'day': 1, 'month': 1, 'year': 1} # {'day': 1, 'month': 10, 'year': 85}
 STARS_PRICE_BY_SUB = {'day': 150, 'month': 1000, 'year': 8500} # {'day': 150, 'month': 1000, 'year': 8500}
 STARS_PRICE_BY_PACK = {'standart': 999, 'pro': 3000, 'max': 5000} # {'standart': 1000, 'pro': 3000, 'max': 5000}
-USD_PRICE_BY_PACK = {'standart': 10, 'pro': 30, 'max': 50}
+USD_PRICE_BY_PACK = {'standart': 1, 'pro': 1, 'max': 1} # {'day': 1, 'month': 10, 'year': 85}
 
 def compute_price(item_kind: str, item_code: str):
     if item_kind == 'sub':
