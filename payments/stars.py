@@ -21,6 +21,9 @@ def build_stars_invoice_link(user_id: int, item_kind: str, item_code: str) -> st
     payload = f"{user_id}:{item_kind}:{item_code}:stars"
     prices = [LabeledPrice(label=title, amount=stars)]  # amount — в звездах для XTR
 
+    logger.info("[PAY/STARS][CREATE] uid=%s kind=%s code=%s stars=%s payload=%s",
+                user_id, item_kind, item_code, stars, payload)
+
     link = bot.create_invoice_link(
         title=title,
         description=description,
@@ -42,5 +45,8 @@ def build_stars_invoice_link(user_id: int, item_kind: str, item_code: str) -> st
         payload=payload,
         status=PaymentStatus.created
     )
+
+    logger.info("[PAY/STARS][LINK] uid=%s kind=%s code=%s link=%s", user_id, item_kind, item_code, link)
+    
     return link
 
