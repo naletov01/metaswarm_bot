@@ -40,46 +40,39 @@ MODEL_MAP = {
 }
 
 
-def _patch_payment_urls(user_id: int, kb_rows):
-    """Заменяет url='https://example.com' на живые ссылки под конкретный товар."""
-    # Пример: в MENUS у тебя есть экраны CB_SUB_3D, CB_SUB_MONTH, CB_SUB_YEAR,
-    # а также экраны с пакетами кредитов. Здесь по тексту/раскладке понимаем, что за товар.
+# 1) Жёсткое соответствие экрана → товар
+MENU_ITEM_BY_KEY = {
+    "CB_SUB_3D":    ("sub",  "day"),
+    "CB_SUB_MONTH": ("sub",  "month"),
+    "CB_SUB_YEAR":  ("sub",  "year"),
+    "CB_CRED_STD":  ("pack", "standart"),  # ВАЖНО: standard, не "standart"
+    "CB_CRED_PRO":  ("pack", "pro"),
+    "CB_CRED_MAX":  ("pack", "max"),
+}
+
+def _patch_payment_urls(user_id: int, kb_rows, menu_key: str):
+    """
+    Заменяет url='https://example.com' на живые ссылки,
+    опираясь НЕ на текст кнопки, а на ключ экрана (menu_key).
+    """
+    kind_code = MENU_ITEM_BY_KEY.get(menu_key)   # ('sub','month') и т.п.
+
     patched = []
     for row in kb_rows:
         new_row = []
         for btn in row:
-            if isinstance(btn, InlineKeyboardButton) and btn.url == "https://example.com":
-                # Определи item_kind/item_code из текста кнопки или текущего экрана
-                # Ниже пример для подписок:
-                label = (btn.text or "").lower()
-                if "3 дня" in label or "3-д" in label or "150 ⭐" in label or "1 $" in label:
-                    urls = build_urls_for_item(user_id, "sub", "day")
-                elif "месяч" in label or "1000 ⭐" in label or "10 $" in label:
-                    urls = build_urls_for_item(user_id, "sub", "month")
-                elif "год" in label or "8500 ⭐" in label or "85 $" in label:
-                    urls = build_urls_for_item(user_id, "sub", "year")
-                elif "standart" in label or "999 ⭐" in label:
-                    urls = build_urls_for_item(user_id, "pack", "standart")
-                elif "pro" in label or "3000 ⭐" in label:
-                    urls = build_urls_for_item(user_id, "pack", "pro")
-                elif "max" in label or "5000 ⭐" in label:
-                    urls = build_urls_for_item(user_id, "pack", "max")
-                else:
-                    urls = None
+            if isinstance(btn, InlineKeyboardButton) and getattr(btn, "url", None) == "https://example.com" and kind_code:
+                urls = build_urls_for_item(user_id, kind_code[0], kind_code[1])
 
-                # Подменяем ссылку по типу кнопки
-                if urls:
-                    if "stars" in label or "⭐" in label:
-                        new_row.append(InlineKeyboardButton(text=btn.text, url=urls["stars"]))
-                    elif "fondy" in label or "stripe" in label:
-                        new_row.append(InlineKeyboardButton(text=btn.text, url=urls["fondy"]))
-                    elif "crypto" in label:
-                        new_row.append(InlineKeyboardButton(text=btn.text, url=urls["cryptobot"]))
-                    else:
-                        # если не распознали — оставим как есть
-                        new_row.append(btn)
+                label = (btn.text or "").lower()
+                # выбор способа оплаты по тексту кнопки
+                if "stars" in label or "⭐" in label:
+                    new_row.append(InlineKeyboardButton(text=btn.text, url=urls["stars"]))
+                elif "crypto" in label:
+                    new_row.append(InlineKeyboardButton(text=btn.text, url=urls["cryptobot"]))
                 else:
-                    new_row.append(btn)
+                    # всё карточное (Stripe/Fondy/Visa/Mastercard) — ведём на наш Fondy-роут
+                    new_row.append(InlineKeyboardButton(text=btn.text, url=urls["fondy"]))
             else:
                 new_row.append(btn)
         patched.append(new_row)
@@ -316,7 +309,7 @@ def render_menu(menu_key: str, user_id: int) -> Tuple[str, InlineKeyboardMarkup]
     buttons = m["buttons"]
     markup = InlineKeyboardMarkup(buttons)
 
-    patched = _patch_payment_urls(user_id, markup.inline_keyboard)
+    patched = _patch_payment_urls(user_id, markup.inline_keyboard, menu_key)
     markup = InlineKeyboardMarkup(patched)
 
     # Подставляем user_id и имя бота в текст
