@@ -1,8 +1,19 @@
 # main.py 
 
-import logging, json
+import logging, json, os
 from anyio import to_thread
 from fastapi import FastAPI, Request, HTTPException, Depends
+
+# ——— Настройка логирования ———
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+# Сделаем телеграм-пакеты тише, если шумят:
+logging.getLogger("telegram").setLevel(logging.WARNING)
+logging.getLogger("telegram.ext").setLevel(logging.INFO)
+
 from telegram import Update, BotCommand
 from sqlalchemy.orm import Session
 from db import engine, Base, get_db, SessionLocal
@@ -22,8 +33,6 @@ from models import Payment, PaymentStatus
 from services.billing import finalize_success, compute_price
 from payments.fondy import _fondy_signature
 
-
-# ——— Настройка логирования ———
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
