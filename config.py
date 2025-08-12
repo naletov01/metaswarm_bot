@@ -31,7 +31,7 @@ FONDY_MERCHANT_SECRET = os.getenv("FONDY_MERCHANT_SECRET", "")
 FONDY_CURRENCY = "USD"
 
 # CryptoBot
-CRYPTOBOT_TOKEN = os.getenv("CRYPTOBOT_TOKEN", "")  # токен бота @CryptoBot
+CRYPTOBOT_TOKEN = os.getenv("CRYPTOBOT_TOKEN")  # токен бота @CryptoBot
 CRYPTOBOT_CURRENCY = "USDT"                         # или TON/USDT/USDC — на твой выбор
 #__________________________________________________________________________________
 
