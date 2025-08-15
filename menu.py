@@ -27,13 +27,13 @@ CB_CRED_PRO        = "menu:cred_pro"
 CB_CRED_MAX        = "menu:cred_max"
 
 # ——— CALLBACK_DATA ДЛЯ ГЕНЕРАЦИИ ———
-CB_GEN_KLING_STD   = "gen:kling_standart"
+CB_GEN_KLING_STD   = "gen:kling_standard"
 CB_GEN_KLING_PRO   = "gen:kling_pro"
 CB_GEN_KLING_MAST  = "gen:kling_master"
 CB_GEN_VEO         = "gen:veo"
 
 MODEL_MAP = {
-    CB_GEN_KLING_STD:  "kling-standart",
+    CB_GEN_KLING_STD:  "kling-standard",
     CB_GEN_KLING_PRO:  "kling-pro",
     CB_GEN_KLING_MAST: "kling-master",
     CB_GEN_VEO:        "veo",
@@ -45,7 +45,7 @@ MENU_ITEM_BY_KEY = {
     CB_SUB_3D:    ("sub",  "day"),
     CB_SUB_MONTH: ("sub",  "month"),
     CB_SUB_YEAR:  ("sub",  "year"),
-    CB_CRED_STD:  ("pack", "standart"),  # ты просил "standart"
+    CB_CRED_STD:  ("pack", "standard"),
     CB_CRED_PRO:  ("pack", "pro"),
     CB_CRED_MAX:  ("pack", "max"),
 }
@@ -107,7 +107,7 @@ MENUS = {
     CB_GENERATION: {
         "text": (
             f"🎞 <b>Генерация видео</b>\nСамые современные модели для создания реалистичных и креативных видео.\n\n"
-            f"🎬 <b>Kling Standart:</b>\n\nБыстрая и доступная модель для базовой генерации видео. Подходит для тестов и простых идей.(стоимость <b>{COST_KLING_STD}</b> кредитов)\n\n"
+            f"🎬 <b>Kling Standard:</b>\n\nБыстрая и доступная модель для базовой генерации видео. Подходит для тестов и простых идей.(стоимость <b>{COST_KLING_STD}</b> кредитов)\n\n"
             f"🎥 <b>Kling Pro:</b>\n\nУлучшенная версия с более высокой детализацией и качеством. Отличный баланс скорости и реализма.(стоимость <b>{COST_KLING_PRO}</b> кредитов)\n\n"
             f"🏆 <b>Kling Master:</b>\n\nМаксимальное качество и кинематографичность. Для тех, кто хочет получить лучшее видео из своих фото.(стоимость <b>{COST_KLING_MAST}</b> кредитов)\n\n"
             f"🔥 <b>Veo3:</b>\n\nМодель от Google для генерации видео с озвучкой по текстовому описанию. Создаёт яркие и креативные ролики без загрузки фото.(стоимость <b>{COST_VEO}</b> кредитов)\n\n"
@@ -115,7 +115,7 @@ MENUS = {
         ),
         # в render_menu мы подставим замок, если нет премиума
         "buttons": [
-            [ InlineKeyboardButton("🎬 Kling Standart 🎬", callback_data=CB_GEN_KLING_STD) ],
+            [ InlineKeyboardButton("🎬 Kling Standard 🎬", callback_data=CB_GEN_KLING_STD) ],
             [ InlineKeyboardButton("🎥 Kling Pro 🎥",       callback_data=CB_GEN_KLING_PRO) ],
             [ InlineKeyboardButton("🏆 Kling Master 🏆",    callback_data=CB_GEN_KLING_MAST) ],
             [ InlineKeyboardButton("🔥 Veo3 со звуком 🔥",  callback_data=CB_GEN_VEO) ],
@@ -145,13 +145,13 @@ MENUS = {
         "text": (
             "🔥 <b>Подписка Premium</b>\n\n"
             "Получи полный доступ к возможностям бота:\n\n"
-            "⤷ Доступ ко всем моделям генерации видео (Kling Standart, Pro, Master и Veo3)\n"
+            "⤷ Доступ ко всем моделям генерации видео (Kling Standard, Pro, Master и Veo3)\n"
             "⤷ Повышенные лимиты на количество генераций\n"
             "⤷ Приоритетная очередь (твои видео создаются быстрее)\n"
             "⤷ Кинематографичное качество и расширенные настройки\n"
             "⤷ Поддержка популярных трендовых промптов\n\n"
             "🍓 Лимиты:\n"
-            "→ Kling Standart: 120 генераций в год\n"
+            "→ Kling Standard: 120 генераций в год\n"
             "→ Kling Pro: 80 генераций в год\n"
             "→ Kling Master: 30 генераций в год\n"
             "→ Veo3: 18 генераций в год\n\n"
@@ -169,7 +169,7 @@ MENUS = {
     CB_BUY_CREDITS: {
         "text": "💳 <b>Пакеты кредитов</b>\n\nВыберите объём:",
         "buttons": [
-            [ InlineKeyboardButton("💰 Standart | 10 $ | 800 кредитов", callback_data=CB_CRED_STD) ],
+            [ InlineKeyboardButton("💰 Standard | 10 $ | 800 кредитов", callback_data=CB_CRED_STD) ],
             [ InlineKeyboardButton("🔥 Pro | 30 $ | 3 000 кредитов",      callback_data=CB_CRED_PRO) ],
             [ InlineKeyboardButton("💎 Max | 50 $ | 6 000 кредитов",      callback_data=CB_CRED_MAX) ],
             [ InlineKeyboardButton("⬅️ Назад",            callback_data=CB_PROFILE) ],
@@ -235,7 +235,7 @@ MENUS = {
 
     # Пакеты кредитов
     CB_CRED_STD: {
-        "text": "💰 <b>Пакет Standart</b>\n\nВыберите метод оплаты:",
+        "text": "💰 <b>Пакет Standard</b>\n\nВыберите метод оплаты:",
         "buttons": [
             [ InlineKeyboardButton("TG Stars | 999 ⭐", url="https://example.com") ],
             [ InlineKeyboardButton("Stripe | 10 $",      url="https://example.com") ],
@@ -274,7 +274,7 @@ def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
             "👤 <b>Ваш профиль</b>\n",
             f"Кредитов осталось: {c}\n",
             "Генераций осталось:",
-            f"→ Kling Standart: {c // COST_KLING_STD}",
+            f"→ Kling Standard: {c // COST_KLING_STD}",
             f"→ Kling Pro:      {c // COST_KLING_PRO}",
             f"→ Kling Master:   {c // COST_KLING_MAST}",
             f"→ Veo3:           {c // COST_VEO}\n",
