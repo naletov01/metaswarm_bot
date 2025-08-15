@@ -286,7 +286,7 @@ def generate_and_send_video(user_id):
 
         # Скачиваем изображение из Telegram, если оно нужно
         tmp_file = None
-        if model in ["kling-standart", "kling-pro", "kling-master"]:
+        if model in ["kling-standard", "kling-pro", "kling-master"]:
             if not image_url:
                 send_safe(bot.send_message, chat_id=user_id, text="Сначала загрузите изображение.")
                 return
@@ -298,12 +298,12 @@ def generate_and_send_video(user_id):
             image_input = open(tmp_file.name, "rb")
 
         # Вызов нужной модели
-        if model == "kling-standart":
+        if model == "kling-standard":
             logger.info(f"[{user_id}] Генерация: модель={model}, prompt={prompt}, файл={image_url}")
             output = replicate.run(
                 "kwaivgi/kling-v2.1",
                 input={
-                    "mode": "standart",
+                    "mode": "standard",
                     "prompt": f"{POSITIVE_PROMPT}, {prompt}",
                     "duration": 5,
                     "start_image": image_input,
