@@ -1,9 +1,11 @@
+# db_utils.py
+
 from db import SessionLocal
 from sqlalchemy.orm import Session
 from models import User
 import logging
 from models import Payment, PaymentStatus
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -69,5 +71,22 @@ def set_user_subscription(db: Session, user_id: int, sub_type: str, expires_at, 
     user.premium_until = expires_at          # ← важно: используем твоё поле
     user.credits = (user.credits or 0) + add_credits
     db.commit()
+
+
+def cleanup_stale_payments(db: Session, max_age_hours: int = 24) -> int:
+    """
+    Удаляет платежи-черновики (status=created), которым больше max_age_hours.
+    Возвращает количество удалённых строк.
+    """
+    cutoff = datetime.utcnow() - timedelta(hours=max_age_hours)
+    q = db.query(Payment).filter(
+        Payment.status == PaymentStatus.created,
+        Payment.created_at < cutoff,
+    )
+    removed = q.delete(synchronize_session=False)
+    db.commit()
+    logger.info("[PAY][CLEANUP] removed=%s older_than=%sh cutoff=%s",
+             removed, max_age_hours, cutoff.isoformat())
+    return removed
 
 
