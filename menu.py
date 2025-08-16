@@ -169,8 +169,8 @@ MENUS = {
     CB_BUY_CREDITS: {
         "text": "💳 <b>Пакеты кредитов</b>\n\nВыберите объём:",
         "buttons": [
-            [ InlineKeyboardButton("💰 Standard | 10 $ | 800 кредитов", callback_data=CB_CRED_STD) ],
-            [ InlineKeyboardButton("🔥 Pro | 30 $ | 3 000 кредитов",      callback_data=CB_CRED_PRO) ],
+            [ InlineKeyboardButton("💰 Standard | 15 $ | 1800 кредитов", callback_data=CB_CRED_STD) ],
+            [ InlineKeyboardButton("🔥 Pro | 30 $ | 3 600 кредитов",      callback_data=CB_CRED_PRO) ],
             [ InlineKeyboardButton("💎 Max | 50 $ | 6 000 кредитов",      callback_data=CB_CRED_MAX) ],
             [ InlineKeyboardButton("⬅️ Назад",            callback_data=CB_PROFILE) ],
         ],
@@ -237,9 +237,9 @@ MENUS = {
     CB_CRED_STD: {
         "text": "💰 <b>Пакет Standard</b>\n\nВыберите метод оплаты:",
         "buttons": [
-            [ InlineKeyboardButton("TG Stars | 999 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe | 10 $",      url="https://example.com") ],
-            [ InlineKeyboardButton("Crypto | 10 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("TG Stars | 1500 ⭐", url="https://example.com") ],
+            [ InlineKeyboardButton("Stripe | 15 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("Crypto | 15 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_BUY_CREDITS) ],
         ],
     },
