@@ -97,11 +97,11 @@ SUB_PERIOD_DAYS = {
     'year':  365,
 }
 
-# Пакеты кредитов (цена в $, кредиты)
+# Пакеты кредитов (кредиты)
 PACKAGE_OPTIONS = {
-    'standard': {'price_usd': 10, 'credits': 800},
-    'pro':      {'price_usd': 30, 'credits': 3000},
-    'max':      {'price_usd': 50, 'credits': 6000},
+    'standard': 1800,
+    'pro':      3600,
+    'max':      6000,
 }
 
 # Реферальная программа
