@@ -8,6 +8,8 @@ from db     import SessionLocal
 from db_utils import get_user
 from services.urls import build_urls_for_item
 from models import User as UserModel
+from services.referrals import get_ref_paid_count
+
 
 # ——— CALLBACK_DATA КОНСТАНТЫ ———
 CB_MAIN            = "menu:main"
@@ -286,6 +288,9 @@ def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
     with SessionLocal() as db:
         user = get_user(db, user_id)
 
+        # считаем количество оплативших по ссылке
+        ref_paid_total = get_ref_paid_count(db, user_id)
+
         # ⬇️ одно число из БД: сколько людей указали этого юзера реферером
         invited_total = db.query(UserModel.user_id).filter(UserModel.referrer_id == user_id).count()
     
@@ -300,7 +305,8 @@ def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
             f"→ Veo3:           {c // COST_VEO}\n",
             f"Приглашённых друзей: {user.invited_count}/{MAX_INVITES}",
             f"Бонусных кредитов: {user.bonus_credits}\n",
-            f"Всего приглашенных пользователей: {invited_total}\n",
+            f"Всего приглашенных пользователей: {invited_total}",
+            f"Оплат по вашей ссылке: {ref_paid_total}\n",
             f"Подписка Premium: {'Активна ✅' if user.premium else 'Не активна ❌'}"
         ]
         if user.premium and user.premium_until:
