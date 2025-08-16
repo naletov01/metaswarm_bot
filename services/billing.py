@@ -47,11 +47,7 @@ def grant_benefit(db: Session, user_id: int, item_kind: str, item_code: str):
         return True
 
     elif item_kind == 'pack':
-        add_credits = {
-            'standard': 1800,
-            'pro': 3600,
-            'max': 6000,
-        }[item_code]
+        add_credits = int(PACKAGE_OPTIONS[item_code])
         update_user_credits(db, user_id, delta=add_credits)
         logger.info("[PAY][GRANT][PACK_OK] uid=%s add_credits=%s", user_id, add_credits)
         return True
