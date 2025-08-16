@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from models import Payment, PaymentStatus
-from config import SUB_CREDITS, SUB_PERIOD_DAYS
+from config import SUB_CREDITS, SUB_PERIOD_DAYS, PACKAGE_OPTIONS
 from db_utils import get_user, update_user_credits, set_user_subscription, create_payment, mark_payment_success, mark_payment_failed
 
 logger = logging.getLogger(__name__)
