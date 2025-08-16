@@ -203,7 +203,7 @@ MENUS = {
         ),
         "buttons": [
             [ InlineKeyboardButton("TG Stars | 150 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe | 1 $",       url="https://example.com") ],
+            [ InlineKeyboardButton("AppPay/G-Pay | 1 $",       url="https://example.com") ],
             [ InlineKeyboardButton("Crypto | 1 $",       url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",            callback_data=CB_SUB_PREMIUM) ],
         ],
@@ -217,7 +217,7 @@ MENUS = {
         ),
         "buttons": [
             [ InlineKeyboardButton("TG Stars | 1000 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe | 10 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("AppPay/G-Pay | 10 $",      url="https://example.com") ],
             [ InlineKeyboardButton("Crypto | 10 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",            callback_data=CB_SUB_PREMIUM) ],
         ],
@@ -231,7 +231,7 @@ MENUS = {
         ),
         "buttons": [
             [ InlineKeyboardButton("TG Stars | 8500 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe | 85 $", url="https://example.com") ],
+            [ InlineKeyboardButton("AppPay/G-Pay | 85 $", url="https://example.com") ],
             [ InlineKeyboardButton("Crypto | 85 $", url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_SUB_PREMIUM) ],
         ],
@@ -246,7 +246,7 @@ MENUS = {
         ),
         "buttons": [
             [ InlineKeyboardButton("TG Stars | 1500 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe | 15 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("AppPay/G-Pay | 15 $",      url="https://example.com") ],
             [ InlineKeyboardButton("Crypto | 15 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_BUY_CREDITS) ],
         ],
@@ -259,7 +259,7 @@ MENUS = {
         ),
         "buttons": [
             [ InlineKeyboardButton("TG Stars | 3000 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe | 30 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("AppPay/G-Pay | 30 $",      url="https://example.com") ],
             [ InlineKeyboardButton("Crypto | 30 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_BUY_CREDITS) ],
         ],
@@ -272,7 +272,7 @@ MENUS = {
         ),
         "buttons": [
             [ InlineKeyboardButton("TG Stars | 5000 ⭐", url="https://example.com") ],
-            [ InlineKeyboardButton("Stripe | 50 $",      url="https://example.com") ],
+            [ InlineKeyboardButton("AppPay/G-Pay | 50 $",      url="https://example.com") ],
             [ InlineKeyboardButton("Crypto | 50 $",      url="https://example.com") ],
             [ InlineKeyboardButton("⬅️ Назад",             callback_data=CB_BUY_CREDITS) ],
         ],
