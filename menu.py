@@ -7,6 +7,7 @@ from typing import Tuple
 from db     import SessionLocal
 from db_utils import get_user
 from services.urls import build_urls_for_item
+from models import User as UserModel
 
 # ——— CALLBACK_DATA КОНСТАНТЫ ———
 CB_MAIN            = "menu:main"
@@ -284,6 +285,9 @@ def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
     
     with SessionLocal() as db:
         user = get_user(db, user_id)
+
+        # ⬇️ одно число из БД: сколько людей указали этого юзера реферером
+        invited_total = db.query(UserModel.id).filter(UserModel.referrer_id == user_id).count()
     
         c = user.credits + user.bonus_credits
         lines = [
@@ -296,6 +300,7 @@ def get_profile_text(user_id: int) -> Tuple[str, InlineKeyboardMarkup]:
             f"→ Veo3:           {c // COST_VEO}\n",
             f"Приглашённых друзей: {user.invited_count}/{MAX_INVITES}",
             f"Бонусных кредитов: {user.bonus_credits}\n",
+            f"Всего приглашенных пользователей: {invited_total}\n",
             f"Подписка Premium: {'Активна ✅' if user.premium else 'Не активна ❌'}"
         ]
         if user.premium and user.premium_until:
